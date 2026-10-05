@@ -1,0 +1,28 @@
+{
+  "name": "ticketsplus",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.js",
+  "workspaces": [
+    "dashboard"
+  ],
+  "scripts": {
+    "start": "node src/index.js",
+    "deploy": "node deploy-commands.js",
+    "commands:manifest": "node command-manifest.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:migrate:new": "prisma migrate dev --name",
+    "dashboard:dev": "npm run dev --workspace=dashboard",
+    "dashboard:build": "npm run build --workspace=dashboard",
+    "dashboard:start": "npm run start --workspace=dashboard"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.20.0",
+    "discord.js": "^14.21.2",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "prisma": "^5.20.0"
+  }
+}

@@ -1,0 +1,79 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+.cosmic-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(129, 90, 240, 0.28), transparent 65%),
+    radial-gradient(ellipse 50% 40% at 85% 90%, rgba(56, 189, 248, 0.16), transparent 65%),
+    linear-gradient(180deg, #05050f 0%, #0a0a1f 45%, #08081a 100%);
+}
+
+.cosmic-stars {
+  position: absolute;
+  inset: -10%;
+  background-image:
+    radial-gradient(1.4px 1.4px at 15px 25px, white, transparent),
+    radial-gradient(1.4px 1.4px at 120px 80px, white, transparent),
+    radial-gradient(1px 1px at 70px 130px, white, transparent),
+    radial-gradient(1px 1px at 180px 40px, white, transparent),
+    radial-gradient(1.4px 1.4px at 230px 160px, white, transparent),
+    radial-gradient(1px 1px at 280px 90px, white, transparent),
+    radial-gradient(1px 1px at 40px 190px, white, transparent);
+  background-repeat: repeat;
+  background-size: 320px 220px;
+  opacity: 0.55;
+  animation: cosmic-twinkle 5s ease-in-out infinite;
+}
+
+.cosmic-stars-large {
+  background-size: 480px 340px;
+  opacity: 0.35;
+  animation-duration: 7s;
+  animation-delay: 1.5s;
+}
+
+@keyframes cosmic-twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.65;
+  }
+}
+
+.prose a {
+  color: rgb(196 181 253);
+  transition: color 0.2s ease;
+}
+
+.prose a:hover {
+  color: rgb(221 214 254);
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fade-in-up 0.5s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cosmic-stars,
+  .cosmic-stars-large,
+  .fade-in-up {
+    animation: none;
+  }
+}

@@ -1,0 +1,107 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Guild {
+  id            String         @id
+  prefix        String?
+  ticketCounter Int            @default(0)
+  createdAt     DateTime       @default(now())
+  premium       Premium?
+  noPrefix      GuildNoPrefix?
+  panels        Panel[]
+  tickets       Ticket[]
+}
+
+model Premium {
+  id        String    @id @default(cuid())
+  guildId   String    @unique
+  guild     Guild     @relation(fields: [guildId], references: [id])
+  expiresAt DateTime?
+  lifetime  Boolean   @default(false)
+  addedBy   String
+  addedAt   DateTime  @default(now())
+}
+
+model PremiumKey {
+  id          String    @id @default(cuid())
+  key         String    @unique
+  duration    String
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  claimedBy   String?
+  claimedAt   DateTime?
+  usedGuildId String?
+}
+
+model GlobalNoPrefix {
+  userId  String   @id
+  addedBy String
+  addedAt DateTime @default(now())
+}
+
+model GuildNoPrefix {
+  id        String              @id @default(cuid())
+  guildId   String              @unique
+  guild     Guild               @relation(fields: [guildId], references: [id])
+  mode      String
+  updatedBy String
+  updatedAt DateTime            @default(now())
+  users     GuildNoPrefixUser[]
+}
+
+model GuildNoPrefixUser {
+  id              String        @id @default(cuid())
+  guildNoPrefixId String
+  guildNoPrefix   GuildNoPrefix @relation(fields: [guildNoPrefixId], references: [id])
+  userId          String
+  addedAt         DateTime      @default(now())
+
+  @@unique([guildNoPrefixId, userId])
+}
+
+model Panel {
+  id                  String   @id @default(cuid())
+  guildId             String
+  guild               Guild    @relation(fields: [guildId], references: [id])
+  name                String
+  categoryIds         String[]
+  channelId           String
+  messageId           String?
+  staffRoleIds        String[]
+  questions           String[]
+  transcriptChannelId String?
+  createdBy           String
+  createdAt           DateTime @default(now())
+  tickets             Ticket[]
+}
+
+model Ticket {
+  id        String    @id @default(cuid())
+  guildId   String
+  guild     Guild     @relation(fields: [guildId], references: [id])
+  panelId   String
+  panel     Panel     @relation(fields: [panelId], references: [id])
+  channelId String    @unique
+  number    Int
+  openerId  String
+  status    String    @default("open")
+  claimedBy String?
+  createdAt DateTime  @default(now())
+  closedAt  DateTime?
+  closedBy  String?
+}
+
+model BotStatus {
+  id            Int      @id @default(1)
+  guildCount    Int      @default(0)
+  ping          Int      @default(0)
+  uptimeSeconds Int      @default(0)
+  updatedAt     DateTime @updatedAt
+}
