@@ -6,7 +6,7 @@
 Lead developer and original author of Quonex — architecture, bot core,
 ticket system, dashboard, and website all designed and built by Sinlt.
 
-- GitHub: https://github.com/Sinlt *(update with actual profile link)*
+- GitHub: https://github.com/sinlt0
 
 ## Quonex Team
 

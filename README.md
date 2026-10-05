@@ -75,7 +75,7 @@ You're welcome to fork this project, self-host it, and build your own
 features on top of it. If you do, you must keep the `LICENSE` and
 `NOTICE` files intact and credit the original project, for example:
 
-> "Built upon [Quonex](https://github.com/Sinlt/quonex) by Sinlt"
+> "Built upon [Quonex](https://github.com/sinlt0/quonex) by Sinlt"
 
 You may **not** strip the license, remove attribution, or present this
 codebase as something you built entirely from scratch. See
