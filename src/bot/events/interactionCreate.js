@@ -5,6 +5,13 @@ const {
   handleClaimButton,
   handleCloseButton
 } = require('../../lib/tickets');
+const {
+  handleOpenButton: handleApplicationOpenButton,
+  handleApplicationModalSubmit,
+  handleModalContinueButton: handleApplicationModalContinueButton,
+  handleAcceptButton,
+  handleDenyButton
+} = require('../../lib/applications');
 const { runSlashCommand, runInteractionHandler } = require('../../lib/commandRunner');
 
 module.exports = {
@@ -20,6 +27,8 @@ module.exports = {
     if (interaction.isModalSubmit()) {
       if (interaction.customId.startsWith('ticket_modal_')) {
         await runInteractionHandler(handleTicketModalSubmit, interaction, 'ticket modal submit');
+      } else if (interaction.customId.startsWith('application_modal_')) {
+        await runInteractionHandler(handleApplicationModalSubmit, interaction, 'application modal submit');
       }
       return;
     }
@@ -34,6 +43,14 @@ module.exports = {
       await runInteractionHandler(handleClaimButton, interaction, 'ticket claim button');
     } else if (interaction.customId.startsWith('ticket_close_')) {
       await runInteractionHandler(handleCloseButton, interaction, 'ticket close button');
+    } else if (interaction.customId.startsWith('application_modal_continue_')) {
+      await runInteractionHandler(handleApplicationModalContinueButton, interaction, 'application modal continue');
+    } else if (interaction.customId.startsWith('application_open_')) {
+      await runInteractionHandler(handleApplicationOpenButton, interaction, 'application open button');
+    } else if (interaction.customId.startsWith('application_accept_')) {
+      await runInteractionHandler(handleAcceptButton, interaction, 'application accept button');
+    } else if (interaction.customId.startsWith('application_deny_')) {
+      await runInteractionHandler(handleDenyButton, interaction, 'application deny button');
     }
   }
 };

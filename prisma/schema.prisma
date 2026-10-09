@@ -17,6 +17,8 @@ model Guild {
   noPrefix      GuildNoPrefix?
   panels        Panel[]
   tickets       Ticket[]
+  applicationPanels ApplicationPanel[]
+  applications      Application[]
 }
 
 model Premium {
@@ -96,6 +98,37 @@ model Ticket {
   createdAt DateTime  @default(now())
   closedAt  DateTime?
   closedBy  String?
+}
+
+model ApplicationPanel {
+  id              String        @id @default(cuid())
+  guildId         String
+  guild           Guild         @relation(fields: [guildId], references: [id])
+  name            String
+  channelId       String
+  messageId       String?
+  reviewChannelId String
+  reviewerRoleIds String[]
+  acceptRoleId    String?
+  questions       String[]
+  createdBy       String
+  createdAt       DateTime      @default(now())
+  applications    Application[]
+}
+
+model Application {
+  id              String    @id @default(cuid())
+  guildId         String
+  guild           Guild     @relation(fields: [guildId], references: [id])
+  panelId         String
+  panel           ApplicationPanel @relation(fields: [panelId], references: [id])
+  applicantId     String
+  answers         Json
+  status          String    @default("pending")
+  reviewMessageId String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  createdAt       DateTime  @default(now())
 }
 
 model BotStatus {

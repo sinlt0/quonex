@@ -101,6 +101,24 @@ Ticket management (any of the panel's staff roles, Manage Server, or devs — us
 
 Opening a ticket happens via the panel's button (or the intake modal, if the panel has questions) — never a command. It enforces the per-plan panel/active-ticket limits from `src/config/limits.js` and prevents a user from opening a second ticket on the same panel while one is already open. All the shared logic (limits, permission checks, channel creation, transcripts, staff-role sync) lives in `src/lib/tickets.js`, called identically by the slash commands, the prefix commands, and the panel/claim/close buttons and modal submit — so behavior never drifts between entry points.
 
+## Applications
+
+A second, parallel panel system for server/staff/partner applications — unlike tickets, an application never creates a channel. Instead, submissions post as an embed-style message to a review channel with Accept/Deny buttons, and the applicant is DMed the result. This mirrors Appy's application-bot feature, adapted to Quonex's existing panel/modal/limits architecture rather than copying Appy's implementation.
+
+Application panel management (Manage Server permission):
+
+- `/application create` / `application create #reviewchannel <name>` — creates an application panel and posts an "Apply" button. Requires a review channel (where submissions are sent for staff to accept/deny); the slash version also accepts an optional post channel and an accept-role to auto-grant on acceptance.
+- `/application delete` / `application delete <panelid>` — deletes a panel (pending/decided applications under it are cleared from the database).
+- `/application list` / `application list` — lists panel IDs and names.
+- `/application setreviewchannel` / `application setreviewchannel <panelid> #channel` — changes where that panel's submissions are reviewed.
+- `/application setacceptrole` / `application setacceptrole <panelid> [@Role]` — sets (or clears, if omitted) a role automatically granted to the applicant when their application is accepted.
+- `/application addreviewerrole` / `application addreviewerrole <panelid> @Role` and `/application removereviewerrole` / `application removereviewerrole <panelid> @Role` — roles (beyond Manage Server/devs) allowed to accept/deny for that panel (`ApplicationPanel.reviewerRoleIds`, capped by `LIMITS.reviewerRoles`). Unlike ticket staff roles, a panel can have zero reviewer roles — Manage Server and devs can always review.
+- `/application addquestion` / `application addquestion <panelid> <question>`, `/application removequestion` / `application removequestion <panelid> <number>`, `/application questions` / `application questions <panelid>` — questions shown before an application is submitted, capped by `LIMITS.applicationQuestions`. Uses the exact same multi-page modal chaining as ticket intake forms (`src/lib/applicationFormSessions.js` mirrors `src/lib/ticketFormSessions.js`), since Discord's 5-field-per-modal and no-modal-chaining-from-modal-submit limits apply here too.
+
+Review flow: clicking "Apply" (or finishing the intake modal) creates an `Application` row with `status: "pending"` and posts it to the panel's review channel with Accept/Deny buttons. A user can only have one pending application per panel at a time. Clicking Accept or Deny (gated by `isReviewer` — Manage Server, devs, or one of the panel's reviewer roles) updates the application's status, edits the review message to show the decision and remove the buttons, grants the accept-role if one is configured, and DMs the applicant the outcome (silently ignored if their DMs are closed). All of this lives in `src/lib/applications.js`, structured to match `src/lib/tickets.js` function-for-function (`createApplicationPanel`/`createPanel`, `handleOpenButton`, etc.) so the two systems stay easy to compare and maintain side by side.
+
+Applications are bot-only for now — there is no dashboard page for reviewing/managing application panels yet (unlike tickets, which do have one).
+
 ## Info commands
 
 - `/owners`, `/devs` — list bot owners/developers.
