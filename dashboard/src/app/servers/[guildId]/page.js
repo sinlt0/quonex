@@ -3,10 +3,11 @@ import { prisma } from '../../../lib/db';
 export default async function GuildOverviewPage({ params }) {
   const { guildId } = await params;
 
-  const [guildRow, panelCount, openTicketCount] = await Promise.all([
+  const [guildRow, panelCount, openTicketCount, pendingApplicationCount] = await Promise.all([
     prisma.guild.findUnique({ where: { id: guildId }, include: { premium: true } }),
     prisma.panel.count({ where: { guildId } }),
-    prisma.ticket.count({ where: { guildId, status: 'open' } })
+    prisma.ticket.count({ where: { guildId, status: 'open' } }),
+    prisma.application.count({ where: { guildId, status: 'pending' } })
   ]);
 
   const prefix = guildRow?.prefix || '!';
@@ -17,7 +18,8 @@ export default async function GuildOverviewPage({ params }) {
     { label: 'Prefix', value: prefix },
     { label: 'Premium', value: isPremium ? 'Active' : 'Free' },
     { label: 'Panels', value: panelCount },
-    { label: 'Open Tickets', value: openTicketCount }
+    { label: 'Open Tickets', value: openTicketCount },
+    { label: 'Pending Applications', value: pendingApplicationCount }
   ];
 
   return (

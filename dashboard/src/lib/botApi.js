@@ -65,3 +65,15 @@ export async function notifyStaffRoleRemove({ guildId, panelId, roleId }) {
 export async function notifyTicketClose({ guildId, channelId, closerId }) {
   return callBotApi('/api/ticket-close', { guildId, channelId, closerId });
 }
+
+export async function notifyApplicationPanelCreated({ guildId, channelId, panelId }) {
+  return callBotApi('/api/application-panel-created', { guildId, channelId, panelId });
+}
+
+export async function notifyApplicationPanelDeleted({ guildId, panelId }) {
+  return callBotApi('/api/application-panel-deleted', { guildId, panelId });
+}
+
+export async function notifyApplicationDecision({ guildId, applicationId, reviewerId, accept }) {
+  return callBotApi('/api/application-decide', { guildId, applicationId, reviewerId, accept });
+}

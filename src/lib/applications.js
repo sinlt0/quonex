@@ -295,6 +295,23 @@ async function decideApplication({ application, panel, guild, reviewerId, accept
   return { ok: true, application: updated };
 }
 
+async function syncReviewMessage(guild, panel, application) {
+  if (!application.reviewMessageId) return;
+
+  const channel = guild.channels.cache.get(panel.reviewChannelId) || (await guild.channels.fetch(panel.reviewChannelId).catch(() => null));
+  if (!channel) return;
+
+  const message = await channel.messages.fetch(application.reviewMessageId).catch(() => null);
+  if (!message) return;
+
+  const applicant = await guild.client.users.fetch(application.applicantId).catch(() => null);
+  let decided = null;
+  if (application.status === 'accepted') decided = `${em.success} Accepted by <@${application.reviewedBy}>.`;
+  else if (application.status === 'denied') decided = `${em.error} Denied by <@${application.reviewedBy}>.`;
+
+  await message.edit(buildReviewMessage(panel, application, applicant, { decided })).catch(() => {});
+}
+
 async function handleOpenButton(interaction) {
   const panelId = interaction.customId.slice('application_open_'.length);
   const panel = await prisma.applicationPanel.findUnique({ where: { id: panelId } });
@@ -448,6 +465,7 @@ module.exports = {
   removeQuestion,
   submitApplication,
   decideApplication,
+  syncReviewMessage,
   handleOpenButton,
   handleApplicationModalSubmit,
   handleModalContinueButton,

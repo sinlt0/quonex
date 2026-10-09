@@ -1,6 +1,12 @@
 const http = require('http');
 const fs = require('fs');
 const { postPanelMessage, deletePanel, addStaffRole, removeStaffRole, closeTicket } = require('./tickets');
+const {
+  postPanelMessage: postApplicationPanelMessage,
+  deleteApplicationPanel,
+  decideApplication,
+  syncReviewMessage
+} = require('./applications');
 const prisma = require('./db');
 
 const DEFAULT_SOCKET_PATH = '/tmp/quonex-internal.sock';
@@ -122,12 +128,71 @@ async function handleTicketClose(client, body) {
   return { status: result.ok ? 200 : 400, body: result };
 }
 
+async function handleApplicationPanelCreated(client, body) {
+  const { guildId, channelId, panelId } = body;
+
+  const panel = await prisma.applicationPanel.findUnique({ where: { id: panelId } });
+  if (!panel || panel.guildId !== guildId) {
+    return { status: 404, body: { ok: false, error: 'panel-missing' } };
+  }
+
+  const guild = client.guilds.cache.get(guildId);
+  const channel = guild ? guild.channels.cache.get(channelId) : null;
+  if (!channel) {
+    return { status: 404, body: { ok: false, error: 'channel-missing' } };
+  }
+
+  const updated = await postApplicationPanelMessage(panel, channel);
+  return { status: 200, body: { ok: true, panel: updated } };
+}
+
+async function handleApplicationPanelDeleted(client, body) {
+  const { guildId, panelId } = body;
+
+  const result = await deleteApplicationPanel(guildId, panelId, client);
+  if (!result.ok) {
+    return { status: 404, body: result };
+  }
+
+  return { status: 200, body: result };
+}
+
+async function handleApplicationDecide(client, body) {
+  const { guildId, applicationId, reviewerId, accept } = body;
+
+  const application = await prisma.application.findUnique({ where: { id: applicationId } });
+  if (!application || application.guildId !== guildId) {
+    return { status: 404, body: { ok: false, error: 'application-missing' } };
+  }
+
+  const panel = await prisma.applicationPanel.findUnique({ where: { id: application.panelId } });
+  if (!panel) {
+    return { status: 404, body: { ok: false, error: 'panel-missing' } };
+  }
+
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) {
+    return { status: 404, body: { ok: false, error: 'guild-missing' } };
+  }
+
+  const result = await decideApplication({ application, panel, guild, reviewerId, accept });
+  if (!result.ok) {
+    return { status: 400, body: result };
+  }
+
+  await syncReviewMessage(guild, panel, result.application);
+  return { status: 200, body: result };
+}
+
 const ROUTES = {
   'POST /api/panel-created': handlePanelCreated,
   'POST /api/panel-deleted': handlePanelDeleted,
   'POST /api/staff-role-add': handleStaffRoleAdd,
   'POST /api/staff-role-remove': handleStaffRoleRemove,
-  'POST /api/ticket-close': handleTicketClose
+  'POST /api/ticket-close': handleTicketClose,
+  'POST /api/application-panel-created': handleApplicationPanelCreated,
+  'POST /api/application-panel-deleted': handleApplicationPanelDeleted,
+  'POST /api/application-decide': handleApplicationDecide
 };
 
 function startInternalApi(client) {
