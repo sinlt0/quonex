@@ -18,6 +18,7 @@
     "dashboard:start": "npm run start --workspace=dashboard"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^0.1.53",
     "@prisma/client": "^5.20.0",
     "discord.js": "^14.21.2",
     "dotenv": "^16.4.5"

@@ -77,3 +77,19 @@ export async function notifyApplicationPanelDeleted({ guildId, panelId }) {
 export async function notifyApplicationDecision({ guildId, applicationId, reviewerId, accept }) {
   return callBotApi('/api/application-decide', { guildId, applicationId, reviewerId, accept });
 }
+
+export async function notifyInteractivePublish({ guildId, id, channelId }) {
+  return callBotApi('/api/interactive-publish', { guildId, id, channelId });
+}
+
+export async function notifyInteractiveDelete({ guildId, id }) {
+  return callBotApi('/api/interactive-delete', { guildId, id });
+}
+
+export async function notifyReactionRoleAdd({ guildId, channelId, messageId, emoji, roleId, mode }) {
+  return callBotApi('/api/reaction-role-add', { guildId, channelId, messageId, emoji, roleId, mode });
+}
+
+export async function notifyReactionRoleRemove({ guildId, id }) {
+  return callBotApi('/api/reaction-role-remove', { guildId, id });
+}

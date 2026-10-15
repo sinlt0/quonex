@@ -7,7 +7,11 @@ const LIMITS = {
     staffRoles: 3,
     applicationPanels: 3,
     applicationQuestions: 5,
-    reviewerRoles: 3
+    reviewerRoles: 3,
+    levelRoleRewards: 15,
+    xpMultipliers: 5,
+    interactiveMessages: 5,
+    reactionRoles: 15
   },
   premium: {
     panels: 10,
@@ -17,7 +21,11 @@ const LIMITS = {
     staffRoles: 15,
     applicationPanels: 10,
     applicationQuestions: 10,
-    reviewerRoles: 15
+    reviewerRoles: 15,
+    levelRoleRewards: 30,
+    xpMultipliers: 15,
+    interactiveMessages: 15,
+    reactionRoles: 50
   }
 };
 

@@ -11,7 +11,7 @@ export default function CreateApplicationPanelForm({ guildId, roles, textChannel
   return (
     <form
       action={formAction}
-      className="space-y-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 transition-all duration-150 ease-out hover:border-white/20"
+      className="space-y-3 dash-card p-5"
     >
       <h2 className="font-medium">Create an application panel</h2>
       <input

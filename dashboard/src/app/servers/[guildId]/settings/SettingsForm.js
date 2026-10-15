@@ -21,7 +21,7 @@ export default function SettingsForm({ guildId, prefix, isPremium, noPrefixMode,
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 transition-all duration-150 ease-out hover:border-white/20">
+      <div className="dash-card p-5">
         <p className="text-xs uppercase tracking-wide text-neutral-500">Claim Premium</p>
         <form action={claimFormAction} className="mt-2 flex flex-wrap items-center gap-2">
           <input
@@ -41,7 +41,7 @@ export default function SettingsForm({ guildId, prefix, isPremium, noPrefixMode,
         {claimState.ok && <p className="mt-1 text-xs text-emerald-400">Premium claimed ({claimState.label}).</p>}
       </div>
 
-      <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 transition-all duration-150 ease-out hover:border-white/20">
+      <div className="dash-card p-5">
         <p className="text-xs uppercase tracking-wide text-neutral-500">Prefix</p>
         <form action={prefixFormAction} className="mt-2 flex flex-wrap items-center gap-2">
           <input
@@ -67,7 +67,7 @@ export default function SettingsForm({ guildId, prefix, isPremium, noPrefixMode,
         {prefixState.error && <p className="mt-1 text-xs text-red-400">{prefixState.error}</p>}
       </div>
 
-      <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 transition-all duration-150 ease-out hover:border-white/20">
+      <div className="dash-card p-5">
         <p className="text-xs uppercase tracking-wide text-neutral-500">No-Prefix</p>
         {!isPremium ? (
           <p className="mt-2 text-sm text-neutral-400">This server does not have premium — no-prefix access requires it.</p>

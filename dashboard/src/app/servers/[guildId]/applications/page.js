@@ -1,5 +1,6 @@
 import { prisma } from '../../../../lib/db';
 import { getGuildChannels, getGuildRoles } from '../../../../lib/guildResources';
+import ModuleShell from '../../../../components/dash/ModuleShell';
 import CreateApplicationPanelForm from './CreateApplicationPanelForm';
 import ApplicationPanelManageCard from './ApplicationPanelManageCard';
 import ApplicationReviewActions from './ApplicationReviewActions';
@@ -17,11 +18,11 @@ export default async function ApplicationsPage({ params }) {
   const panelNameFor = panelId => panels.find(panel => panel.id === panelId)?.name || panelId;
 
   return (
-    <div className="fade-in-up space-y-8">
+    <ModuleShell moduleId="applications">
       <div className="space-y-6">
         <CreateApplicationPanelForm guildId={guildId} roles={roles} textChannels={textChannels} />
         {panels.length === 0 ? (
-          <p className="text-neutral-400">No application panels yet.</p>
+          <p className="text-sm text-neutral-400">No application panels yet.</p>
         ) : (
           <div className="space-y-3">
             {panels.map(panel => (
@@ -32,13 +33,13 @@ export default async function ApplicationsPage({ params }) {
       </div>
 
       <div className="space-y-3">
-        <h2 className="font-medium">Pending applications</h2>
+        <h2 className="dash-label pt-4">Pending applications</h2>
         {pendingApplications.length === 0 ? (
           <p className="text-neutral-400">No pending applications.</p>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-white/10">
+          <div className="dash-card overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-sm">
-              <thead className="bg-white/5 text-neutral-400">
+              <thead className="text-neutral-400">
                 <tr>
                   <th className="px-4 py-2">Panel</th>
                   <th className="px-4 py-2">Applicant</th>
@@ -51,7 +52,7 @@ export default async function ApplicationsPage({ params }) {
                 {pendingApplications.map(application => {
                   const answers = Array.isArray(application.answers) ? application.answers : [];
                   return (
-                    <tr key={application.id} className="border-t border-white/10 align-top transition-colors duration-150 hover:bg-white/10">
+                    <tr key={application.id} className="border-t border-[#1c2030] align-top transition-colors duration-150 hover:bg-[#121623]">
                       <td className="px-4 py-2">{panelNameFor(application.panelId)}</td>
                       <td className="px-4 py-2">{application.applicantId}</td>
                       <td className="px-4 py-2">{new Date(application.createdAt).toLocaleString()}</td>
@@ -79,6 +80,6 @@ export default async function ApplicationsPage({ params }) {
           </div>
         )}
       </div>
-    </div>
+    </ModuleShell>
   );
 }

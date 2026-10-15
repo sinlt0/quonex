@@ -7,6 +7,12 @@ const {
   decideApplication,
   syncReviewMessage
 } = require('./applications');
+const {
+  publishInteractiveMessage,
+  deleteInteractiveMessage,
+  addReactionRole,
+  removeReactionRole
+} = require('./interactive');
 const prisma = require('./db');
 
 const DEFAULT_SOCKET_PATH = '/tmp/quonex-internal.sock';
@@ -184,7 +190,31 @@ async function handleApplicationDecide(client, body) {
   return { status: 200, body: result };
 }
 
+async function handleInteractivePublish(client, body) {
+  const result = await publishInteractiveMessage(client, body);
+  return { status: result.ok ? 200 : 400, body: result };
+}
+
+async function handleInteractiveDelete(client, body) {
+  const result = await deleteInteractiveMessage(client, body);
+  return { status: result.ok ? 200 : 404, body: result };
+}
+
+async function handleReactionRoleAdd(client, body) {
+  const result = await addReactionRole(client, body);
+  return { status: result.ok ? 200 : 400, body: result };
+}
+
+async function handleReactionRoleRemove(client, body) {
+  const result = await removeReactionRole(client, body);
+  return { status: result.ok ? 200 : 404, body: result };
+}
+
 const ROUTES = {
+  'POST /api/interactive-publish': handleInteractivePublish,
+  'POST /api/interactive-delete': handleInteractiveDelete,
+  'POST /api/reaction-role-add': handleReactionRoleAdd,
+  'POST /api/reaction-role-remove': handleReactionRoleRemove,
   'POST /api/panel-created': handlePanelCreated,
   'POST /api/panel-deleted': handlePanelDeleted,
   'POST /api/staff-role-add': handleStaffRoleAdd,

@@ -119,6 +119,76 @@ Review flow: clicking "Apply" (or finishing the intake modal) creates an `Applic
 
 Applications are bot-only for now — there is no dashboard page for reviewing/managing application panels yet (unlike tickets, which do have one).
 
+## Greet (welcome / leave / ban messages)
+
+Per-guild welcome, leave, and ban messages, researched against Mimu, Koya, Welcomer, and Greed and then built as a single `GreetSettings` row per guild (`prisma/schema.prisma`) rather than three separate tables, since the three events share the same shape (enabled/channel/blocks, optional DM). Everything renders as CV2, never classic embeds, consistent with the rest of the bot.
+
+**Dashboard-only.** Unlike the rest of the bot, Greet has no slash or prefix commands at all — there's no `/greet`. Configuration (toggles, channel, DM, the welcome-card premium feature, and the message builder itself) lives entirely on the dashboard's **Greet** tab (`dashboard/src/app/servers/[guildId]/greet/`), because the message builder below needs real UI (reordering blocks, per-block fields, image previews) that a chat command can't reasonably offer. The bot only *consumes* `GreetSettings` at event time; the dashboard is the only way to write it.
+
+### Components V2 message builder
+
+Each of the five message slots — join channel, join DM, leave channel, ban channel, ban DM — stores its content as an ordered list of **blocks** (`GreetSettings.joinBlocks`/`joinDmBlocks`/`leaveBlocks`/`banBlocks`/`banDmBlocks`, each a Postgres `Json` column holding an array), not a single text string. The dashboard's `BlockEditor` component lets a server owner add, reorder, edit, and remove blocks of six types, matching what Discord's CV2 containers can actually hold:
+
+- `{ type: 'text', content }` — a text display. Supports placeholders and markdown; `{user}`/`{moderator}` ping the person (see Mentions below).
+- `{ type: 'separator', divider, spacing: 'small' | 'large' }` — a divider line.
+- `{ type: 'image', urls: string[] }` — a media gallery of 1-10 images. One image shows full-width; multiple render as a grid gallery, same as Discord's native multi-image galleries.
+- `{ type: 'section', content, thumbnail }` — text with a small thumbnail image beside it.
+- `{ type: 'footer', content }` — a divider followed by small subtext (Discord's `-# ` syntax), for a custom "powered by"-style note, separate from the bot's own credit footer that's still appended after everything else.
+- `{ type: 'buttons', buttons: [{ label, url, emoji? }] }` — up to 5 link buttons in a row. Link-style only (no custom IDs), since there's no interaction handler behind a greet message.
+
+`src/lib/components.js` renders this into real discord.js builders via `blocksContainer`/`blocksMessage` (`ContainerBuilder` + `TextDisplayBuilder`/`SeparatorBuilder`/`MediaGalleryBuilder`/`SectionBuilder`+`ThumbnailBuilder`/`ActionRowBuilder`+`ButtonBuilder`), kept separate from the pre-existing `textContainer`/`v2Message` that every other feature (tickets, applications, help, etc.) still uses unchanged. The `image` block also accepts a legacy single `url` field (treated as a one-item array) so nothing saved before the gallery upgrade breaks. `src/lib/greet.js`'s `validateBlocks` is the authoritative schema check (block count, per-type required fields, URL shape, button/image limits — `MAX_BLOCKS`/`MAX_BUTTONS_PER_BLOCK`/`MAX_IMAGES_PER_BLOCK` in `src/config/greet.js`); `dashboard/src/lib/greetBlocks.js` holds a discord.js-free copy of the same constants and a `validateBlocksClient` for instant feedback in the browser before the dashboard's `saveGreetBlocksAction` re-validates and writes. `{placeholder}` substitution applies to `text`/`section`/`footer` block content (button labels/URLs and image URLs are treated as static) — see Placeholders below.
+
+### Mentions actually ping
+
+`{user}` and `{moderator}` render as a real `<@id>` mention, and `buildMemberEventPayload`/the DM and ban sends in `src/lib/greet.js` all explicitly set `allowedMentions: { parse: ['users', 'roles'] }` (`GREET_ALLOWED_MENTIONS`) rather than leaving it to Discord's default — so a join message that pings the new member, or a ban DM that names the moderator, actually triggers a notification instead of just rendering as a highlighted, silent name.
+
+### Dashboard controls
+
+- **Toggle** — enable/disable that event's channel message (`updateGreetToggleAction`).
+- **Channel select** — where the message posts (`updateGreetChannelAction`), populated from `getGuildChannels` (same Discord REST lookup the ticket/application panel forms use).
+- **DM toggle** — an optional DM to the member, independent of the channel message. Join and ban both support this; leave does not (a user who already left can't usefully be DMed, and Discord won't deliver it regardless).
+- **Image welcome card** (join only, **free**) — a canvas-generated card (`src/lib/welcomeCard.js`, `@napi-rs/canvas` — chosen over `node-canvas` for its prebuilt native binaries, no build toolchain needed on whatever Pterodactyl Node egg it runs on): avatar, username, and a "Welcome to `<server>` · Member #`<n>`" line over a gradient or a custom background URL. When enabled, the generated card is inserted as the first block, ahead of the server's own blocks.
+- **Card background** (join only, **premium**) — only the *custom background image* for the card is premium-gated; the card itself (with the default gradient) is free for everyone. `handleGuildMemberAdd` re-checks `isGuildPremium` at send time and falls back to the default gradient (not to no card) if a guild saved a background and later lost premium — `updateGreetBackgroundAction` also re-checks server-side even though the UI hides the field for non-premium guilds.
+- **Block builder** — the editor described above, one instance per message slot, each with its own independent Save button.
+
+### Placeholders
+
+`src/config/greet.js`'s `PLACEHOLDER_GROUPS` (also shown directly on the dashboard's Greet tab), rendered by `renderPlaceholders` in `src/lib/placeholders.js`: `{user}` (mention), `{user_name}`, `{user_tag}`, `{user_id}`, `{server_name}`, `{member_count}`, plus ban-only `{reason}` and `{moderator}`. An unrecognized `{placeholder}` is left as-is rather than silently stripped, so a typo is visible.
+
+### Events
+
+`src/bot/events/guildMemberAdd.js`, `guildMemberRemove.js`, `guildBanAdd.js` are thin wrappers around `src/lib/greet.js`'s `handleGuildMemberAdd`/`handleGuildMemberRemove`/`handleGuildBanAdd`. `guildBanAdd` requires the non-privileged `GuildModeration` gateway intent (added to `src/bot/client.js`); `guildMemberAdd`/`guildMemberRemove` rely on the already-enabled privileged `GuildMembers` intent. The ban event payload itself only carries `{guild, user}` — no reason or moderator — so `lookupBanAuditLog` in `src/lib/greet.js` best-effort fetches the matching `MemberBanAdd` audit log entry to recover both; if that fails (missing View Audit Log permission, or the lookup racing the audit log write) it falls back to "No reason provided" / "Unknown" rather than failing the whole message.
+
+Auto-role on join is explicitly out of scope for this feature.
+
+## AFK
+
+`/afk [reason]` / `afk [reason]` marks you AFK (`src/lib/afk.js`, backed by the `Afk` model — one row per guild+user, `@@unique([guildId, userId])`). Two things then happen automatically, hooked into `src/bot/events/messageCreate.js` ahead of prefix/no-prefix command dispatch so they run on every guild message regardless of whether it's a command:
+
+- **`handleAfkReturn`** — the next message you send in that guild clears your AFK status and gets a short "welcome back" reply, auto-deleted after 8 seconds so it doesn't clutter the channel. A no-op for anyone who isn't AFK, so it's cheap to call unconditionally.
+- **`notifyAfkMentions`** — if a message `@mentions` someone currently AFK, the bot replies naming their reason and how long ago they went AFK (`formatSince`: "just now" / `<n>m ago` / `<n>h ago` / `<n>d ago`). Rate-limited per channel+AFK-user to once a minute (`mentionNoticeCache`, an in-memory `Map`) so a busy channel repeatedly pinging the same AFK person doesn't spam a notice every time.
+
+Both replies set `allowedMentions: { parse: [] }` so the notice itself doesn't ping anyone — it's informational only, unlike Greet's messages which deliberately do ping (see Greet's Mentions section above).
+
+## Levels (XP, ranks, role rewards)
+
+A message-XP leveling system modeled on Mee6, Tatsu, and Arcane, with open-source clones such as [TFAGaming/NetLevel-Bot](https://github.com/TFAGaming/NetLevel-Bot) as the reference for the curve and level-up message design. Two findings shaped the design: those bots all configure leveling through a web dashboard and only expose member-facing commands in Discord, and the community-standard XP curve is `f(x) = 5x² + 50x + 100`, where `x` is the current level and the result is the XP needed to reach `x + 1`.
+
+Member commands (free, any member): `/rank [user]` / `rank [@user]` shows level, rank, total XP, and a progress bar; `/leaderboard` / `leaderboard` shows the top 10. Both reply that leveling is off if the server hasn't enabled it. All configuration lives on the dashboard's **Levels** tab (`dashboard/src/app/servers/[guildId]/levels/`), same split as Greet.
+
+How it works (`src/lib/levels.js`, hooked into `src/bot/events/messageCreate.js` for every guild message from a non-bot):
+
+- `addXpFromMessage` returns early when leveling is off, the channel is in `ignoredChannelIds`, or the member is inside their cooldown (`LevelSettings.cooldownSeconds`, default 60, `lastXpAt` on `MemberLevel`). Otherwise it awards a random integer between `xpMin` and `xpMax` (defaults 15-25) and increments the message count.
+- `levelFromXp` in `src/lib/xpCurve.js` walks the curve level by level to turn a lifetime XP total into `{ level, xpIntoLevel, xpForNextLevel }`. The curve is incremental, not cumulative, so it iterates instead of solving algebraically.
+- On a level-up, `syncRoleRewards` grants every reward at or below the new level the member doesn't already hold (rewards stack, nothing is removed), then `announceLevelUp` posts `levelUpMessage` to `levelUpChannelId`, or to the channel the member was talking in when that is unset. Placeholders: `{user}`, `{user_name}`, `{user_tag}`, `{user_id}`, `{level}`, `{rank}`, `{server_name}`, `{member_count}` (rendered by `renderPlaceholders`, so unknown placeholders stay visible).
+- Rank is the count of members with strictly more XP, plus one, backed by a `@@index([guildId, xp])` on `MemberLevel`.
+
+Role rewards are capped by `LIMITS.*.levelRoleRewards` in `src/config/limits.js`: 15 free, 30 premium. The dashboard's `addRoleRewardAction` enforces the same cap and rejects a second reward at an already-used level (`@@unique([settingsId, level])`). The role picker comes from `getGuildRoles`, which already filters out managed roles and `@everyone`; the bot's own role position still decides whether Discord lets it assign a given role.
+
+Not built: voice XP, XP multipliers, and a canvas rank card (rank is a text reply with a progress bar for now).
+
+Needs a migration: `npx prisma migrate dev --name add_levels`.
+
 ## Info commands
 
 - `/owners`, `/devs` — list bot owners/developers.
@@ -256,3 +326,37 @@ The same Next.js app also serves the public-facing site — no separate project.
 - `/credits` — team credit, tech stack, support server link.
 - `/changelog` — reads `src/lib/changelog.js`, a plain array you edit by hand as features ship (there's no ground truth for real dates, so entries are versioned rather than dated — add dates yourself if you want them).
 - `/terms`, `/privacy` — Terms of Service and Privacy Policy, linked in the footer on every page. **These are starting templates, not legal advice** — they say so at the top of each page. Have them reviewed before you rely on them, especially the bracketed placeholders (governing law, payment terms). Discord requires a Privacy Policy and Terms of Service URL for verified/public bot applications, so these also serve that purpose once you fill them in and deploy.
+
+### Server dashboard layout
+
+The server dashboard (`/servers/[guildId]/*`) uses a Dyno-style shell: `layout.js` renders a sticky left `Sidebar` (grouped modules, status dots, filter box, mobile "Navigate" dropdown) next to the page content, and wraps everything in `.dash-root`, which swaps the cosmic background for a flat dark one. Modules are defined once in `src/lib/modules.js`; add one there and it appears in the sidebar and the overview cards. Status dots are honest: Leveling uses its real `enabled` flag, Greetings is on if any join/leave/ban message is enabled, Tickets and Applications are on once a panel exists. Each module page wraps its content in `components/dash/ModuleShell` (icon, title, optional Enabled switch, callout, tabs) and builds settings from `Card`, `SettingRow` and `Switch`. Tickets groups `/panels` and `/tickets` under one module with tabs. Shared styling lives in the `.dash-*` classes in `globals.css`.
+
+## Level extras
+
+On top of message XP, Levels supports: **voice XP** (a 60-second tick in `lib/levels.js` awards `voiceXpPerMinute` to humans in voice channels, skipping deafened members, the AFK channel, ignored channels and, optionally, channels with fewer than two people; needs the `GuildVoiceStates` intent), **XP multipliers** (server-wide, per role — highest matching role wins — and per channel, combined by multiplication; free 5, premium 15), **blocked roles** that never earn XP, and a **rank card** image for `/rank` (`lib/rankCard.js`, free accent color, premium custom background). Message and voice XP both go through `awardXp`, so level-ups and role rewards behave the same.
+
+## Roles & Buttons (interactive messages)
+
+Dashboard-only builder (`dashboard/src/app/servers/[guildId]/roles/`) for Components V2 messages whose buttons and select menus run **actions**. Messages are stored in `InteractiveMessage.blocks` (JSON). Besides the Greet block types, two interactive types exist: `actions` (a row of up to 5 buttons) and `select` (a string menu with up to 25 options). Each button/option has an ordered list of up to 8 actions: `addRole`, `removeRole`, `toggleRole`, `swapRole` (give one role, remove others), `reply` (private), `sendMessage` (to a channel), `dm`, and `showMessage` (opens another saved message privately, which is how multi-step flows like a menu that leads to gender buttons are built). Buttons and menus can require a role to use.
+
+Custom IDs are `im:<messageId>:<componentId>`; the handler is `lib/interactive.js` (`handleInteractiveComponent`) and is wired in `interactionCreate.js`. Role changes from all actions are collected and applied in one add/remove call. The bot refuses roles it cannot manage, managed roles, and roles with Administrator, Manage Server/Roles/Channels/Webhooks, Ban, Kick or Timeout (`DANGEROUS_PERMISSIONS` in `config/interactive.js`). Validation lives in `lib/interactiveBlocks.js` and is shared by the bot and the dashboard server actions; it also enforces Discord's 40-component and 5-row limits. Publishing goes through the internal API (`/api/interactive-publish`), which edits the live message in place when the channel is unchanged. `/rolemenu list` and `/rolemenu send` post saved messages from Discord. Limits: 5 messages free, 15 premium.
+
+**Reaction roles** (`ReactionRole`) bind an emoji on any existing message to a role (`toggle` removes the role when the reaction is removed, `once` keeps it). They are added from the dashboard's Reaction roles tab, the bot reacts itself, and `messageReactionAdd/Remove` events do the work. Free 15, premium 50.
+
+Migration: `npx prisma migrate dev --name level_extras_interactive`.
+
+### Roles & Buttons: advanced options
+
+Modeled on Sapphire's components (Toggle/Add/Remove/Set roles, min/max selections, ephemeral confirmations) with extras:
+
+- **Multi-role actions.** Give, remove, toggle and set-roles actions take up to 10 roles each. Old single-`roleId` actions still work.
+- **Temporary roles.** Give/toggle/set actions can carry `durationMinutes` (up to 30 days). Expiries are stored in `TempRole` and a 30-second sweeper (`startTempRoleSweeper`) removes the role.
+- **Conditions** on every non-link button and menu: required roles (any of), blocked roles, minimum level (reads `MemberLevel`), and a per-member cooldown (in memory, so it resets on restart).
+- **Select menus** have `minValues` / `maxValues`.
+- **Send message** with an empty channel posts in the channel where the button was clicked.
+- **Message settings:** accent color for the container stripe and a log channel that records who got or lost which roles.
+- **Presets** (`config/interactivePresets.js`) seed new messages: blank, button roles, dropdown roles, pick-one, verify button. Presets have empty role lists, so they must be filled in before they can be saved.
+- **Duplicate** copies a message with its settings.
+- **Reaction role modes:** `toggle`, `once`, and `unique` (picking one removes the member's other reaction roles on that message and their reactions).
+
+Migration: `npx prisma migrate dev --name role_system_upgrade` (adds `accentColor`, `logChannelId`, and `TempRole`).

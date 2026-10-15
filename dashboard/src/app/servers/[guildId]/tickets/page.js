@@ -1,4 +1,5 @@
 import { prisma } from '../../../../lib/db';
+import TicketsShell from '../panels/TicketsShell';
 import TicketActions from './TicketActions';
 
 export default async function TicketsPage({ params }) {
@@ -10,13 +11,18 @@ export default async function TicketsPage({ params }) {
   });
 
   if (!tickets.length) {
-    return <p className="fade-in-up text-neutral-400">No open tickets.</p>;
+    return (
+      <TicketsShell guildId={guildId}>
+        <p className="text-sm text-neutral-400">No open tickets.</p>
+      </TicketsShell>
+    );
   }
 
   return (
-    <div className="fade-in-up overflow-x-auto rounded-xl border border-white/10">
+    <TicketsShell guildId={guildId}>
+    <div className="dash-card overflow-x-auto">
       <table className="w-full min-w-[680px] text-left text-sm">
-        <thead className="bg-white/5 text-neutral-400">
+        <thead className="text-neutral-400">
           <tr>
             <th className="px-4 py-2">Number</th>
             <th className="px-4 py-2">Opener</th>
@@ -27,7 +33,7 @@ export default async function TicketsPage({ params }) {
         </thead>
         <tbody>
           {tickets.map(ticket => (
-            <tr key={ticket.id} className="border-t border-white/10 transition-colors duration-150 hover:bg-white/10">
+            <tr key={ticket.id} className="border-t border-[#1c2030] transition-colors duration-150 hover:bg-[#121623]">
               <td className="px-4 py-2">#{String(ticket.number).padStart(4, '0')}</td>
               <td className="px-4 py-2">{ticket.openerId}</td>
               <td className="px-4 py-2">{ticket.claimedBy || '—'}</td>
@@ -40,5 +46,6 @@ export default async function TicketsPage({ params }) {
         </tbody>
       </table>
     </div>
+    </TicketsShell>
   );
 }

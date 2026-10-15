@@ -37,7 +37,7 @@ export default function PanelManageCard({ guildId, panel, categories, roles }) {
   );
 
   return (
-    <div className="space-y-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 transition-all duration-150 ease-out hover:border-white/20">
+    <div className="space-y-4 dash-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <p className="min-w-0 break-words font-medium">{panel.name}</p>
         <form action={deleteFormAction}>

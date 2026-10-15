@@ -1,5 +1,7 @@
 const CHANNEL_TYPE_TEXT = 0;
 const CHANNEL_TYPE_CATEGORY = 4;
+const CHANNEL_TYPE_VOICE = 2;
+const CHANNEL_TYPE_STAGE = 13;
 
 export async function getGuildChannels(guildId) {
   const response = await fetch(`https://discord.com/api/guilds/${guildId}/channels`, {
@@ -7,12 +9,13 @@ export async function getGuildChannels(guildId) {
     next: { revalidate: 30 }
   });
 
-  if (!response.ok) return { textChannels: [], categories: [] };
+  if (!response.ok) return { textChannels: [], categories: [], voiceChannels: [] };
 
   const channels = await response.json();
   return {
     textChannels: channels.filter(channel => channel.type === CHANNEL_TYPE_TEXT),
-    categories: channels.filter(channel => channel.type === CHANNEL_TYPE_CATEGORY)
+    categories: channels.filter(channel => channel.type === CHANNEL_TYPE_CATEGORY),
+    voiceChannels: channels.filter(channel => channel.type === CHANNEL_TYPE_VOICE || channel.type === CHANNEL_TYPE_STAGE)
   };
 }
 

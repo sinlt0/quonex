@@ -9,11 +9,11 @@ export default function CreditsPage() {
     <div className="fade-in-up mx-auto max-w-2xl px-4 py-16">
       <h1 className="text-3xl font-semibold">Credits</h1>
       <p className="mt-4 text-neutral-400">{CREDIT}</p>
-      <div className="mt-8 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 transition-all duration-150 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:border-white/20 hover:shadow-xl hover:shadow-violet-500/25">
+      <div className="mt-8 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 transition-all duration-150 ease-out hover:border-white/20">
         <p className="text-sm uppercase tracking-wide text-neutral-500">Team</p>
         <p className="mt-1 text-lg font-medium">{TEAM_NAME}</p>
       </div>
-      <div className="mt-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 transition-all duration-150 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:border-white/20 hover:shadow-xl hover:shadow-violet-500/25">
+      <div className="mt-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 transition-all duration-150 ease-out hover:border-white/20">
         <p className="text-sm uppercase tracking-wide text-neutral-500">Built With</p>
         <ul className="mt-2 flex flex-wrap gap-2">
           {STACK.map(item => (

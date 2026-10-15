@@ -12,6 +12,7 @@ const {
   handleAcceptButton,
   handleDenyButton
 } = require('../../lib/applications');
+const { handleInteractiveComponent } = require('../../lib/interactive');
 const { runSlashCommand, runInteractionHandler } = require('../../lib/commandRunner');
 
 module.exports = {
@@ -33,7 +34,19 @@ module.exports = {
       return;
     }
 
+    if (interaction.isStringSelectMenu()) {
+      if (interaction.customId.startsWith('im:')) {
+        await runInteractionHandler(handleInteractiveComponent, interaction, 'interactive menu');
+      }
+      return;
+    }
+
     if (!interaction.isButton()) return;
+
+    if (interaction.customId.startsWith('im:')) {
+      await runInteractionHandler(handleInteractiveComponent, interaction, 'interactive button');
+      return;
+    }
 
     if (interaction.customId.startsWith('ticket_modal_continue_')) {
       await runInteractionHandler(handleModalContinueButton, interaction, 'ticket modal continue');

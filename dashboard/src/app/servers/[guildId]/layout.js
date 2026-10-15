@@ -1,7 +1,9 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '../../../auth';
 import { getMutualGuilds } from '../../../lib/discord';
-import NavTabs from '../../../components/NavTabs';
+import { prisma } from '../../../lib/db';
+import Sidebar from '../../../components/dash/Sidebar';
 
 export default async function GuildLayout({ children, params }) {
   const { guildId } = await params;
@@ -12,16 +14,32 @@ export default async function GuildLayout({ children, params }) {
   const guild = guilds.find(item => item.id === guildId);
   if (!guild) redirect('/servers');
 
+  const [greet, levels, panelCount, applicationPanelCount, liveInteractiveCount] = await Promise.all([
+    prisma.greetSettings.findUnique({ where: { guildId } }),
+    prisma.levelSettings.findUnique({ where: { guildId } }),
+    prisma.panel.count({ where: { guildId } }),
+    prisma.applicationPanel.count({ where: { guildId } }),
+    prisma.interactiveMessage.count({ where: { guildId, messageId: { not: null } } })
+  ]);
+
+  const statuses = {
+    greet: Boolean(greet?.joinEnabled || greet?.leaveEnabled || greet?.banEnabled),
+    levels: Boolean(levels?.enabled),
+    roles: liveInteractiveCount > 0,
+    applications: applicationPanelCount > 0,
+    tickets: panelCount > 0
+  };
+
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <h1 className="min-w-0 break-words text-2xl font-semibold">{guild.name}</h1>
-        <a href="/servers" className="shrink-0 text-sm text-neutral-400 transition-colors duration-200 hover:text-violet-300">
-          All servers
-        </a>
+    <div className="dash-root mx-auto max-w-7xl px-4 py-8">
+      <Link href="/servers" className="mb-6 inline-flex items-center gap-2 text-sm text-neutral-400 transition-colors hover:text-white">
+        <span aria-hidden="true">←</span>
+        <span className="truncate">{guild.name}</span>
+      </Link>
+      <div className="grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
+        <Sidebar guildId={guildId} statuses={statuses} />
+        <main className="min-w-0">{children}</main>
       </div>
-      <NavTabs guildId={guildId} />
-      <div className="mt-6">{children}</div>
     </div>
   );
 }

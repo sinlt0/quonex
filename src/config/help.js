@@ -8,7 +8,10 @@ const CATEGORY_DESCRIPTIONS = {
   Premium: 'Premium activation and management.',
   'No-Prefix': 'No-prefix command access management.',
   Tickets: 'Ticket panels and ticket management.',
-  Applications: 'Application panels and reviewing submissions.'
+  Applications: 'Application panels and reviewing submissions.',
+  Utility: 'Small quality-of-life commands.',
+  Levels: 'XP, ranks, and the server leaderboard.',
+  Roles: 'Button, menu and reaction role messages.'
 };
 
 module.exports = { COMMANDS_PER_PAGE, HELP_HIDDEN_CATEGORIES, CATEGORY_DESCRIPTIONS };

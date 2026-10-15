@@ -1,6 +1,6 @@
 function StatCard({ label, value }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-6 py-4 text-center transition-all duration-150 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:border-white/20 hover:shadow-xl hover:shadow-violet-500/25">
+    <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-6 py-4 text-center transition-all duration-150 ease-out hover:border-white/20">
       <p className="text-2xl font-semibold">{value ?? '—'}</p>
       <p className="mt-1 text-xs uppercase tracking-wide text-neutral-500">{label}</p>
     </div>

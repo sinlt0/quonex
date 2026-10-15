@@ -19,6 +19,10 @@ model Guild {
   tickets       Ticket[]
   applicationPanels ApplicationPanel[]
   applications      Application[]
+  greetSettings     GreetSettings?
+  levelSettings     LevelSettings?
+  interactiveMessages InteractiveMessage[]
+  reactionRoles       ReactionRole[]
 }
 
 model Premium {
@@ -131,10 +135,138 @@ model Application {
   createdAt       DateTime  @default(now())
 }
 
+model GreetSettings {
+  id      String @id @default(cuid())
+  guildId String @unique
+  guild   Guild  @relation(fields: [guildId], references: [id])
+
+  joinEnabled        Boolean  @default(false)
+  joinChannelId       String?
+  joinBlocks          Json     @default("[{\"type\":\"text\",\"content\":\"Welcome {user} to **{server_name}**! You're member #{member_count}.\"}]")
+  joinCardEnabled     Boolean  @default(false)
+  joinCardBackground  String?
+  joinDmEnabled       Boolean  @default(false)
+  joinDmBlocks        Json     @default("[{\"type\":\"text\",\"content\":\"Welcome to **{server_name}**, {user_name}!\"}]")
+
+  leaveEnabled   Boolean @default(false)
+  leaveChannelId String?
+  leaveBlocks    Json    @default("[{\"type\":\"text\",\"content\":\"**{user_tag}** left the server. We now have {member_count} members.\"}]")
+
+  banEnabled   Boolean @default(false)
+  banChannelId String?
+  banBlocks    Json    @default("[{\"type\":\"text\",\"content\":\"**{user_tag}** was banned from the server.\"}]")
+  banDmEnabled Boolean @default(false)
+  banDmBlocks  Json    @default("[{\"type\":\"text\",\"content\":\"You have been banned from **{server_name}**.\"}]")
+
+  updatedAt DateTime @updatedAt
+}
+
 model BotStatus {
   id            Int      @id @default(1)
   guildCount    Int      @default(0)
   ping          Int      @default(0)
   uptimeSeconds Int      @default(0)
   updatedAt     DateTime @updatedAt
+}
+
+model Afk {
+  id      String   @id @default(cuid())
+  guildId String
+  userId  String
+  reason  String   @default("AFK")
+  since   DateTime @default(now())
+
+  @@unique([guildId, userId])
+}
+
+model LevelSettings {
+  id      String @id @default(cuid())
+  guildId String @unique
+  guild   Guild  @relation(fields: [guildId], references: [id])
+
+  enabled           Boolean  @default(false)
+  xpMin             Int      @default(15)
+  xpMax             Int      @default(25)
+  cooldownSeconds   Int      @default(60)
+  levelUpEnabled    Boolean  @default(true)
+  levelUpChannelId  String?
+  levelUpMessage    String   @default("{user} just reached level **{level}**!")
+  ignoredChannelIds String[] @default([])
+  noXpRoleIds       String[] @default([])
+  voiceXpEnabled     Boolean  @default(false)
+  voiceXpPerMinute   Int      @default(10)
+  voiceRequireOthers Boolean  @default(true)
+  globalMultiplier   Float    @default(1)
+  xpMultipliers      Json     @default("[]")
+  rankCardEnabled    Boolean  @default(true)
+  rankCardAccent     String   @default("#8b7cf6")
+  rankCardBackground String?
+  roleRewards       LevelRoleReward[]
+  updatedAt         DateTime @updatedAt
+}
+
+model LevelRoleReward {
+  id         String        @id @default(cuid())
+  settingsId String
+  settings   LevelSettings @relation(fields: [settingsId], references: [id])
+  level      Int
+  roleId     String
+
+  @@unique([settingsId, level])
+}
+
+model MemberLevel {
+  id       String    @id @default(cuid())
+  guildId  String
+  userId   String
+  xp       Int       @default(0)
+  level    Int       @default(0)
+  messages Int       @default(0)
+  voiceMinutes Int   @default(0)
+  lastXpAt DateTime?
+
+  @@unique([guildId, userId])
+  @@index([guildId, xp])
+}
+
+model InteractiveMessage {
+  id        String   @id @default(cuid())
+  guildId   String
+  guild     Guild    @relation(fields: [guildId], references: [id])
+  name      String
+  blocks    Json     @default("[]")
+  accentColor  String?
+  logChannelId String?
+  channelId String?
+  messageId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([guildId])
+}
+
+model ReactionRole {
+  id        String   @id @default(cuid())
+  guildId   String
+  guild     Guild    @relation(fields: [guildId], references: [id])
+  channelId String
+  messageId String
+  emoji     String
+  roleId    String
+  mode      String   @default("toggle")
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, emoji])
+  @@index([guildId])
+}
+
+model TempRole {
+  id        String   @id @default(cuid())
+  guildId   String
+  userId    String
+  roleId    String
+  expiresAt DateTime
+
+  @@unique([guildId, userId, roleId])
+  @@index([expiresAt])
 }

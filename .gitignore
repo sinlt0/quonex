@@ -19,7 +19,6 @@ dashboard/.env.*
 # ---- Next.js (dashboard) build output ----
 dashboard/.next/
 dashboard/out/
-dashboard/content/
 .next/
 out/
 
