@@ -2,6 +2,7 @@ const { startBotStatusHeartbeat } = require('../../lib/botStatus');
 const { startInternalApi } = require('../../lib/internalApi');
 const { startVoiceXp } = require('../../lib/levels');
 const { startTempRoleSweeper } = require('../../lib/interactive');
+const { startSecuritySweeper } = require('../../lib/security/timers');
 
 module.exports = {
   name: 'clientReady',
@@ -12,5 +13,6 @@ module.exports = {
     startInternalApi(client);
     startVoiceXp(client);
     startTempRoleSweeper(client);
+    startSecuritySweeper(client);
   }
 };

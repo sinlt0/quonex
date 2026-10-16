@@ -13,11 +13,20 @@ const {
   handleDenyButton
 } = require('../../lib/applications');
 const { handleInteractiveComponent } = require('../../lib/interactive');
+const { handleVerifyButton, handleVerifyModal } = require('../../lib/security/verification');
 const { runSlashCommand, runInteractionHandler } = require('../../lib/commandRunner');
 
 module.exports = {
   name: 'interactionCreate',
   async execute(interaction) {
+    if (interaction.isAutocomplete()) {
+      const command = interaction.client.commands.get(interaction.commandName);
+      if (command && command.autocomplete) {
+        await command.autocomplete(interaction).catch(error => console.error('Autocomplete failed:', error));
+      }
+      return;
+    }
+
     if (interaction.isChatInputCommand()) {
       const command = interaction.client.commands.get(interaction.commandName);
       if (!command) return;
@@ -26,6 +35,10 @@ module.exports = {
     }
 
     if (interaction.isModalSubmit()) {
+      if (interaction.customId === 'sec:verify:modal') {
+        await runInteractionHandler(handleVerifyModal, interaction, 'verification modal');
+        return;
+      }
       if (interaction.customId.startsWith('ticket_modal_')) {
         await runInteractionHandler(handleTicketModalSubmit, interaction, 'ticket modal submit');
       } else if (interaction.customId.startsWith('application_modal_')) {
@@ -45,6 +58,11 @@ module.exports = {
 
     if (interaction.customId.startsWith('im:')) {
       await runInteractionHandler(handleInteractiveComponent, interaction, 'interactive button');
+      return;
+    }
+
+    if (interaction.customId === 'sec:verify:start' || interaction.customId === 'sec:verify:answer') {
+      await runInteractionHandler(handleVerifyButton, interaction, 'verification button');
       return;
     }
 

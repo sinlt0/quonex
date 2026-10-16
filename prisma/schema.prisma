@@ -22,6 +22,7 @@ model Guild {
   greetSettings     GreetSettings?
   levelSettings     LevelSettings?
   interactiveMessages InteractiveMessage[]
+  securitySettings    SecuritySettings?
   reactionRoles       ReactionRole[]
 }
 
@@ -269,4 +270,106 @@ model TempRole {
 
   @@unique([guildId, userId, roleId])
   @@index([expiresAt])
+}
+
+model SecuritySettings {
+  id        String   @id @default(cuid())
+  guildId   String   @unique
+  guild     Guild    @relation(fields: [guildId], references: [id])
+  config    Json     @default("{}")
+  updatedAt DateTime @updatedAt
+}
+
+model SecurityOwner {
+  id        String   @id @default(cuid())
+  guildId   String
+  userId    String
+  addedBy   String
+  createdAt DateTime @default(now())
+
+  @@unique([guildId, userId])
+}
+
+model SecurityWhitelist {
+  id        String   @id @default(cuid())
+  guildId   String
+  targetId  String
+  kind      String
+  modules   String[] @default(["all"])
+  events    String[] @default([])
+  addedBy   String
+  createdAt DateTime @default(now())
+
+  @@unique([guildId, targetId, kind])
+  @@index([guildId])
+}
+
+model SecurityLog {
+  id         String   @id @default(cuid())
+  guildId    String
+  module     String
+  action     String
+  severity   String   @default("info")
+  executorId String?
+  targetId   String?
+  detail     Json?
+  createdAt  DateTime @default(now())
+
+  @@index([guildId, createdAt])
+}
+
+model QuarantineEntry {
+  id        String   @id @default(cuid())
+  guildId   String
+  userId    String
+  roleIds   String[]
+  reason    String?
+  createdBy String
+  createdAt DateTime @default(now())
+
+  @@unique([guildId, userId])
+}
+
+model SecurityTimer {
+  id        String   @id @default(cuid())
+  guildId   String
+  kind      String
+  targetId  String?
+  data      Json?
+  expiresAt DateTime
+
+  @@index([expiresAt])
+  @@index([guildId, kind])
+}
+
+model SecurityBackup {
+  id        String   @id @default(cuid())
+  guildId   String
+  name      String
+  auto      Boolean  @default(false)
+  data      Json
+  createdBy String
+  createdAt DateTime @default(now())
+
+  @@index([guildId])
+}
+
+model SecurityStrike {
+  id      String   @id @default(cuid())
+  guildId String
+  userId  String
+  count   Int      @default(0)
+  lastAt  DateTime @default(now())
+
+  @@unique([guildId, userId])
+}
+
+model SecurityLock {
+  id        String   @id @default(cuid())
+  guildId   String
+  channelId String
+  prev      Json
+  createdAt DateTime @default(now())
+
+  @@unique([guildId, channelId])
 }

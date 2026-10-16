@@ -11,7 +11,8 @@ const CATEGORY_DESCRIPTIONS = {
   Applications: 'Application panels and reviewing submissions.',
   Utility: 'Small quality-of-life commands.',
   Levels: 'XP, ranks, and the server leaderboard.',
-  Roles: 'Button, menu and reaction role messages.'
+  Roles: 'Button, menu and reaction role messages.',
+  Security: 'Anti-nuke, anti-raid, auto-mod, verification, lockdown and the trust system.'
 };
 
 module.exports = { COMMANDS_PER_PAGE, HELP_HIDDEN_CATEGORIES, CATEGORY_DESCRIPTIONS };

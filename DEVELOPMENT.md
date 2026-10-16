@@ -360,3 +360,23 @@ Modeled on Sapphire's components (Toggle/Add/Remove/Set roles, min/max selection
 - **Reaction role modes:** `toggle`, `once`, and `unique` (picking one removes the member's other reaction roles on that message and their reactions).
 
 Migration: `npx prisma migrate dev --name role_system_upgrade` (adds `accentColor`, `logChannelId`, and `TempRole`).
+
+## Security (Quonex Shield)
+
+Slash-command-first security suite. The dashboard module comes later and will be generated from the same registry.
+
+**Commands:** `/security` (status, setup presets, config, whitelist, owners, backup, panic, quarantine, logs), `/antinuke`, `/antiraid`, `/automod`, `/verification`, `/lockdown`. Every module command also has `view|set|add|remove|reset` for any setting, with autocomplete for keys and values.
+
+**Registry:** `src/config/security.js` holds about 213 typed settings (`REGISTRY`). Defaults, validation and the command autocomplete are derived from it. Values are stored as sparse JSON in `SecuritySettings.config` and merged on load (`src/lib/security/store.js`, 20s cache).
+
+**Trust tiers:** server owner, then extra owners (`SecurityOwner`, max 5, only the owner adds them, trusted by every module and allowed to configure), then the global whitelist (`SecurityWhitelist`, kind user/role/channel, `modules` where `all` is global, `events` for per-anti-nuke-event scope, max 100). `core.strictAccess` (default on) limits configuration to owner and extra owners.
+
+**Engines (`src/lib/security/`):** `antinuke` (audit-log driven, rolling windows, reverts, panic), `antiraid` (join rate, gate, risk score), `automod` (heat system, 13 filters, strikes), `verification` (button, captcha, passphrase), `lockdown` (restores exact prior overwrites via `SecurityLock`), `backup`, `punish`, `alerts`, `timers`.
+
+**Events:** `guildAuditLogEntryCreate`, `channelDelete`, `roleDelete`, `guildMemberAdd`, `messageCreate`, `messageUpdate`. Timers (`SecurityTimer`) are persisted and swept every 15s; hourly auto-backup and log pruning.
+
+**Requirements:** intents Guilds, GuildMembers, GuildModeration, GuildMessages, MessageContent. The bot needs View Audit Log, Ban/Kick Members, Manage Roles, Manage Channels, Timeout Members and Manage Server, and its role must sit above the roles it manages or punishes.
+
+**Migration:** run `npx prisma migrate dev --name security_suite` (models: SecuritySettings, SecurityOwner, SecurityWhitelist, SecurityLog, QuarantineEntry, SecurityTimer, SecurityBackup, SecurityStrike, SecurityLock).
+
+**Not built yet:** dashboard Security module, ban sync across servers, VPN and alt detection.

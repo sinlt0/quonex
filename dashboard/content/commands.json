@@ -401,5 +401,433 @@
         "description": "Post an interactive message to a channel"
       }
     ]
+  },
+  {
+    "type": "slash",
+    "name": "security",
+    "description": "Quonex Shield: security overview, trust system, backups and panic mode",
+    "category": "Security",
+    "usage": "/security <status|setup|logchannel|logs|config|whitelist|owners|backup|panic|quarantine>",
+    "hidden": false,
+    "subcommands": [
+      {
+        "name": "status",
+        "description": "Check every security module and the permissions I need"
+      },
+      {
+        "name": "setup",
+        "description": "Apply a security preset in one step"
+      },
+      {
+        "name": "logchannel",
+        "description": "Set where security events are logged"
+      },
+      {
+        "name": "logs",
+        "description": "Show recent security events"
+      },
+      {
+        "name": "config view",
+        "description": "Show settings"
+      },
+      {
+        "name": "config set",
+        "description": "Change any setting"
+      },
+      {
+        "name": "config add",
+        "description": "Add an item to a list setting"
+      },
+      {
+        "name": "config remove",
+        "description": "Remove an item from a list setting"
+      },
+      {
+        "name": "config reset",
+        "description": "Reset a setting or module"
+      },
+      {
+        "name": "whitelist add",
+        "description": "Whitelist a user, role or channel (global or per module and event)"
+      },
+      {
+        "name": "whitelist remove",
+        "description": "Remove a whitelist entry"
+      },
+      {
+        "name": "whitelist list",
+        "description": "Show the whitelist"
+      },
+      {
+        "name": "whitelist clear",
+        "description": "Remove every whitelist entry"
+      },
+      {
+        "name": "owners add",
+        "description": "Make someone an extra owner (server owner only)"
+      },
+      {
+        "name": "owners remove",
+        "description": "Remove an extra owner (server owner only)"
+      },
+      {
+        "name": "owners list",
+        "description": "Show the owner and extra owners"
+      },
+      {
+        "name": "backup create",
+        "description": "Take a backup now"
+      },
+      {
+        "name": "backup list",
+        "description": "Show saved backups"
+      },
+      {
+        "name": "backup restore",
+        "description": "Recreate roles and channels missing from a backup"
+      },
+      {
+        "name": "backup delete",
+        "description": "Delete a backup"
+      },
+      {
+        "name": "panic start",
+        "description": "Lock every channel now"
+      },
+      {
+        "name": "panic end",
+        "description": "Unlock everything and end panic mode"
+      },
+      {
+        "name": "quarantine add",
+        "description": "Quarantine a member"
+      },
+      {
+        "name": "quarantine remove",
+        "description": "Release a member and restore their roles"
+      },
+      {
+        "name": "quarantine list",
+        "description": "Show quarantined members"
+      },
+      {
+        "name": "quarantine setup",
+        "description": "Create the quarantine role"
+      }
+    ]
+  },
+  {
+    "type": "slash",
+    "name": "antinuke",
+    "description": "Stop nukers: limits on deleting channels, roles, banning, and more",
+    "category": "Security",
+    "usage": "/antinuke <status|enable|disable|event|punishment|panic|bots|permissions|view|set|add|remove|reset>",
+    "hidden": false,
+    "subcommands": [
+      {
+        "name": "status",
+        "description": "Show anti-nuke settings and every watched event"
+      },
+      {
+        "name": "enable",
+        "description": "Turn anti-nuke on"
+      },
+      {
+        "name": "disable",
+        "description": "Turn anti-nuke off"
+      },
+      {
+        "name": "event",
+        "description": "Tune one event: limit, window and punishment"
+      },
+      {
+        "name": "punishment",
+        "description": "Default punishment and timeout length"
+      },
+      {
+        "name": "panic",
+        "description": "What happens after someone is punished"
+      },
+      {
+        "name": "bots",
+        "description": "Who may add bots"
+      },
+      {
+        "name": "permissions",
+        "description": "Edit which permissions count as dangerous"
+      },
+      {
+        "name": "view",
+        "description": "Show settings"
+      },
+      {
+        "name": "set",
+        "description": "Change any setting"
+      },
+      {
+        "name": "add",
+        "description": "Add an item to a list setting"
+      },
+      {
+        "name": "remove",
+        "description": "Remove an item from a list setting"
+      },
+      {
+        "name": "reset",
+        "description": "Reset a setting or the module to defaults"
+      }
+    ]
+  },
+  {
+    "type": "slash",
+    "name": "antiraid",
+    "description": "Stop raids: join-rate detection, join gate and risk scoring",
+    "category": "Security",
+    "usage": "/antiraid <status|enable|disable|threshold|action|gate|risk|pattern|start|end|view|set|add|remove|reset>",
+    "hidden": false,
+    "subcommands": [
+      {
+        "name": "status",
+        "description": "Show settings and current join activity"
+      },
+      {
+        "name": "enable",
+        "description": "Turn anti-raid on"
+      },
+      {
+        "name": "disable",
+        "description": "Turn anti-raid off"
+      },
+      {
+        "name": "threshold",
+        "description": "How many joins count as a raid"
+      },
+      {
+        "name": "action",
+        "description": "What happens during a raid"
+      },
+      {
+        "name": "gate",
+        "description": "Join gate rules checked on every join"
+      },
+      {
+        "name": "risk",
+        "description": "Risk scoring for every join"
+      },
+      {
+        "name": "pattern",
+        "description": "Blocked username patterns"
+      },
+      {
+        "name": "start",
+        "description": "Start raid mode manually"
+      },
+      {
+        "name": "end",
+        "description": "End raid mode"
+      },
+      {
+        "name": "view",
+        "description": "Show settings"
+      },
+      {
+        "name": "set",
+        "description": "Change any setting"
+      },
+      {
+        "name": "add",
+        "description": "Add an item to a list setting"
+      },
+      {
+        "name": "remove",
+        "description": "Remove an item from a list setting"
+      },
+      {
+        "name": "reset",
+        "description": "Reset a setting or the module to defaults"
+      }
+    ]
+  },
+  {
+    "type": "slash",
+    "name": "automod",
+    "description": "Auto-moderation with a heat system, 13 filters and escalating strikes",
+    "category": "Security",
+    "usage": "/automod <status|enable|disable|filter|words|links|punishment|behavior|strikes|view|set|add|remove|reset>",
+    "hidden": false,
+    "subcommands": [
+      {
+        "name": "status",
+        "description": "Show every filter and the punishment ladder"
+      },
+      {
+        "name": "enable",
+        "description": "Turn auto-moderation on"
+      },
+      {
+        "name": "disable",
+        "description": "Turn auto-moderation off"
+      },
+      {
+        "name": "filter",
+        "description": "Configure one filter"
+      },
+      {
+        "name": "words",
+        "description": "Blocked words"
+      },
+      {
+        "name": "links",
+        "description": "Link filter domains"
+      },
+      {
+        "name": "punishment",
+        "description": "Timeouts and strikes"
+      },
+      {
+        "name": "behavior",
+        "description": "Delete, notify and scan behavior"
+      },
+      {
+        "name": "strikes",
+        "description": "See or clear a member's strikes"
+      },
+      {
+        "name": "view",
+        "description": "Show settings"
+      },
+      {
+        "name": "set",
+        "description": "Change any setting"
+      },
+      {
+        "name": "add",
+        "description": "Add an item to a list setting"
+      },
+      {
+        "name": "remove",
+        "description": "Remove an item from a list setting"
+      },
+      {
+        "name": "reset",
+        "description": "Reset a setting or the module to defaults"
+      }
+    ]
+  },
+  {
+    "type": "slash",
+    "name": "verification",
+    "description": "Verify members with a button, captcha or passphrase before they get in",
+    "category": "Security",
+    "usage": "/verification <setup|panel|mode|rules|panel-style|status|enable|disable|verify|unverify|view|set|add|remove|reset>",
+    "hidden": false,
+    "subcommands": [
+      {
+        "name": "setup",
+        "description": "Set up verification and post the panel"
+      },
+      {
+        "name": "panel",
+        "description": "Post or move the verify panel"
+      },
+      {
+        "name": "mode",
+        "description": "Change how members verify"
+      },
+      {
+        "name": "rules",
+        "description": "Attempts, time limit and failure action"
+      },
+      {
+        "name": "panel-style",
+        "description": "Customize the panel text"
+      },
+      {
+        "name": "status",
+        "description": "Show verification settings"
+      },
+      {
+        "name": "enable",
+        "description": "Turn verification on"
+      },
+      {
+        "name": "disable",
+        "description": "Turn verification off"
+      },
+      {
+        "name": "verify",
+        "description": "Verify a member by hand"
+      },
+      {
+        "name": "unverify",
+        "description": "Send a member back through verification"
+      },
+      {
+        "name": "view",
+        "description": "Show settings"
+      },
+      {
+        "name": "set",
+        "description": "Change any setting"
+      },
+      {
+        "name": "add",
+        "description": "Add an item to a list setting"
+      },
+      {
+        "name": "remove",
+        "description": "Remove an item from a list setting"
+      },
+      {
+        "name": "reset",
+        "description": "Reset a setting or the module to defaults"
+      }
+    ]
+  },
+  {
+    "type": "slash",
+    "name": "lockdown",
+    "description": "Lock a channel or the whole server, and restore exact permissions afterwards",
+    "category": "Security",
+    "usage": "/lockdown <channel|server|end|status|view|set|add|remove|reset>",
+    "hidden": false,
+    "subcommands": [
+      {
+        "name": "channel",
+        "description": "Lock one channel"
+      },
+      {
+        "name": "server",
+        "description": "Lock every channel"
+      },
+      {
+        "name": "end",
+        "description": "Unlock a channel, or everything"
+      },
+      {
+        "name": "status",
+        "description": "Show locked channels and timers"
+      },
+      {
+        "name": "view",
+        "description": "Show settings"
+      },
+      {
+        "name": "set",
+        "description": "Change any setting"
+      },
+      {
+        "name": "add",
+        "description": "Add an item to a list setting"
+      },
+      {
+        "name": "remove",
+        "description": "Remove an item from a list setting"
+      },
+      {
+        "name": "reset",
+        "description": "Reset a setting or the module to defaults"
+      }
+    ]
   }
 ]
