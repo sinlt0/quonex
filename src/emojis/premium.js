@@ -1,4 +1,4 @@
 module.exports = {
-  premiumStar: { id: '1532442435089731594', name: 'red_premium', animated: true },
-  key: { id: '1532442435089731594', name: 'red_premium', animated: true }
+  premiumStar: { id: '1560592976596574228', name: 'premuim_star', animated: false  },
+  key: { id: '1560592976596574228', name: 'premuim_star', animated: false }
 };
