@@ -1,15 +1,44 @@
 const MANAGE_GUILD = 0x20;
 
-export async function getUserManageableGuilds(accessToken) {
+const GUILD_CACHE_MS = 45 * 1000;
+const guildCache = new Map();
+const guildInflight = new Map();
+
+async function fetchUserGuilds(accessToken) {
   const response = await fetch('https://discord.com/api/users/@me/guilds', {
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: 'no-store'
   });
 
-  if (!response.ok) return [];
+  if (response.status === 429) {
+    const retry = Number(response.headers.get('retry-after')) || 1;
+    await new Promise(resolve => setTimeout(resolve, Math.min(retry, 3) * 1000));
+    return null;
+  }
+  if (!response.ok) return response.status === 401 ? [] : null;
+  return response.json();
+}
 
-  const guilds = await response.json();
-  return guilds.filter(guild => guild.owner || (Number(guild.permissions) & MANAGE_GUILD) === MANAGE_GUILD);
+export async function getUserManageableGuilds(accessToken) {
+  if (!accessToken) return [];
+
+  const cached = guildCache.get(accessToken);
+  if (cached && cached.expires > Date.now()) return cached.guilds;
+
+  if (!guildInflight.has(accessToken)) {
+    guildInflight.set(
+      accessToken,
+      fetchUserGuilds(accessToken).finally(() => guildInflight.delete(accessToken))
+    );
+  }
+
+  const fetched = await guildInflight.get(accessToken);
+  if (fetched === null) return cached ? cached.guilds : [];
+
+  const guilds = fetched.filter(guild => guild.owner || (Number(guild.permissions) & MANAGE_GUILD) === MANAGE_GUILD);
+  guildCache.set(accessToken, { guilds, expires: Date.now() + GUILD_CACHE_MS });
+  if (guildCache.size > 500) guildCache.delete(guildCache.keys().next().value);
+  return guilds;
 }
 
 export async function getBotGuildIds() {

@@ -1,9 +1,9 @@
 import http from 'http';
 
-const DEFAULT_SOCKET_PATH = '/tmp/quonex-internal.sock';
+import { resolveSocketPath } from '../../../src/lib/socketPath.js';
 
 function callBotApi(path, body) {
-  const socketPath = process.env.INTERNAL_API_SOCKET || DEFAULT_SOCKET_PATH;
+  const socketPath = resolveSocketPath();
   const payload = JSON.stringify(body);
 
   return new Promise(resolve => {
