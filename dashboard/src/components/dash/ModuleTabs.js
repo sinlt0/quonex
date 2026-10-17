@@ -7,7 +7,7 @@ export default function ModuleTabs({ tabs }) {
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-6 border-b border-[#1c2030]">
+    <nav className="flex gap-6 overflow-x-auto whitespace-nowrap border-b border-[#1c2030]">
       {tabs.map(tab => {
         const active = pathname === tab.href;
         return (

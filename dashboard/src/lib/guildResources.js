@@ -30,3 +30,19 @@ export async function getGuildRoles(guildId) {
   const roles = await response.json();
   return roles.filter(role => !role.managed && role.name !== '@everyone');
 }
+
+export async function getUserNames(ids) {
+  const unique = [...new Set(ids)].slice(0, 40);
+  const entries = await Promise.all(
+    unique.map(async id => {
+      const response = await fetch(`https://discord.com/api/users/${id}`, {
+        headers: { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` },
+        next: { revalidate: 600 }
+      }).catch(() => null);
+      if (!response || !response.ok) return [id, null];
+      const user = await response.json();
+      return [id, user.global_name || user.username];
+    })
+  );
+  return Object.fromEntries(entries);
+}

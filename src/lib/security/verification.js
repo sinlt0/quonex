@@ -12,10 +12,12 @@ const {
   MediaGalleryItemBuilder,
   MessageFlags
 } = require('discord.js');
+const crypto = require('crypto');
 const { createCanvas } = require('@napi-rs/canvas');
+const prisma = require('../db');
 const { v2Message } = require('../components');
 const { loadConfig, setRaw, isMemberTrusted, addTimer, cancelTimer } = require('./store');
-const { punish } = require('./punish');
+const { punish, quarantineMember } = require('./punish');
 const { securityLog } = require('./alerts');
 const { em } = require('../emojis');
 
@@ -228,6 +230,11 @@ async function handleVerifyButton(interaction) {
     return;
   }
 
+  if (config.mode === 'web') {
+    await sendWebLink(interaction, member, config);
+    return;
+  }
+
   if (config.mode === 'button') {
     await grantVerification(member, 'button');
     await interaction.reply(v2Message([`${em.success} You are verified. Welcome in!`], { ephemeral: true, footer: false }));
@@ -240,6 +247,73 @@ async function handleVerifyButton(interaction) {
   }
 
   await interaction.reply(captchaReply(guild, member.id, config));
+}
+
+function dashboardUrl() {
+  const raw = process.env.DASHBOARD_URL || process.env.AUTH_URL || '';
+  return raw.replace(/\/+$/, '');
+}
+
+async function sendWebLink(interaction, member, config) {
+  const base = dashboardUrl();
+  if (!base) {
+    await interaction.reply(v2Message([`${em.error} Web verification is not available yet. Ask an admin to set up the dashboard link.`], { ephemeral: true, footer: false }));
+    return;
+  }
+
+  const guild = interaction.guild;
+  await prisma.webVerifySession.deleteMany({ where: { guildId: guild.id, userId: member.id, usedAt: null } });
+  const token = crypto.randomBytes(24).toString('base64url');
+  await prisma.webVerifySession.create({
+    data: { guildId: guild.id, userId: member.id, token, expiresAt: new Date(Date.now() + config.webLinkMinutes * 60 * 1000) }
+  });
+
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setLabel('Verify on the web').setStyle(ButtonStyle.Link).setURL(`${base}/verify/${guild.id}?t=${token}`)
+  );
+  await interaction.reply(
+    v2Message(
+      ['**Verify on the web**', `Open the link, sign in with Discord and press verify. It works for ${config.webLinkMinutes} minutes and only for your account.`, '-# Your IP address is checked for VPNs and stored only as a one-way hash so staff can spot alt accounts.'],
+      { ephemeral: true, footer: false, extraComponents: [row] }
+    )
+  );
+}
+
+async function applyWebResult(guild, body) {
+  const config = (await loadConfig(guild.id)).verification;
+  const member = await guild.members.fetch(body.userId).catch(() => null);
+  if (!member) return { ok: false, error: 'member-missing' };
+
+  const verified = config.verifiedRoleId ? member.roles.cache.has(config.verifiedRoleId) : config.unverifiedRoleId ? !member.roles.cache.has(config.unverifiedRoleId) : false;
+  let outcome = ['grant', 'flag', 'quarantine', 'block'].includes(body.outcome) ? body.outcome : 'block';
+  const trusted = await isMemberTrusted(member, 'verification');
+  if (trusted) outcome = 'grant';
+
+  const reasons = Array.isArray(body.reasons) ? body.reasons : [];
+  const lines = reasons.map(item => {
+    if (item.type === 'vpn') return `VPN or proxy detected (${item.detail}).`;
+    if (item.type === 'country') return `Country not allowed: ${item.detail}.`;
+    return `Shares ${(item.alts || []).some(alt => alt.by === 'device') ? 'a device or connection' : 'a connection'} with: ${(item.alts || []).slice(0, 5).map(alt => `<@${String(alt.userId).replace(/\D/g, '')}> (${alt.by})`).join(', ')}.`;
+  });
+  if (body.country) lines.push(`Country: ${String(body.country).toUpperCase()}.`);
+
+  if (outcome === 'grant' || outcome === 'flag') {
+    if (!verified) await grantVerification(member, 'web');
+    if (outcome === 'flag') {
+      await securityLog(guild, { module: 'verification', action: 'web verification flagged', severity: 'warning', targetId: member.id, lines: [...lines, 'Verified, but worth a look.'] });
+    }
+    return { ok: true, final: outcome };
+  }
+
+  if (outcome === 'quarantine') {
+    await cancelTimer(guild.id, 'verify-timeout', member.id);
+    await quarantineMember(guild, member, 'Web verification flagged this account', null).catch(() => {});
+    await securityLog(guild, { module: 'verification', action: 'web verification quarantined a member', severity: 'critical', targetId: member.id, lines });
+    return { ok: true, final: 'quarantine' };
+  }
+
+  await securityLog(guild, { module: 'verification', action: 'web verification blocked', severity: 'warning', targetId: member.id, lines });
+  return { ok: true, final: 'block' };
 }
 
 async function handleVerifyModal(interaction) {
@@ -302,6 +376,7 @@ module.exports = {
   handleVerifyButton,
   handleVerifyModal,
   handleVerifyTimeout,
+  applyWebResult,
   postPanel,
   isConfigured
 };

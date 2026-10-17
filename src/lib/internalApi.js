@@ -13,6 +13,7 @@ const {
   addReactionRole,
   removeReactionRole
 } = require('./interactive');
+const { runSecurityAction } = require('./security/internal');
 const prisma = require('./db');
 
 const DEFAULT_SOCKET_PATH = '/tmp/quonex-internal.sock';
@@ -200,6 +201,11 @@ async function handleInteractiveDelete(client, body) {
   return { status: result.ok ? 200 : 404, body: result };
 }
 
+async function handleSecurityAction(client, body) {
+  const result = await runSecurityAction(client, body);
+  return { status: result.ok ? 200 : 400, body: result };
+}
+
 async function handleReactionRoleAdd(client, body) {
   const result = await addReactionRole(client, body);
   return { status: result.ok ? 200 : 400, body: result };
@@ -213,6 +219,7 @@ async function handleReactionRoleRemove(client, body) {
 const ROUTES = {
   'POST /api/interactive-publish': handleInteractivePublish,
   'POST /api/interactive-delete': handleInteractiveDelete,
+  'POST /api/security-action': handleSecurityAction,
   'POST /api/reaction-role-add': handleReactionRoleAdd,
   'POST /api/reaction-role-remove': handleReactionRoleRemove,
   'POST /api/panel-created': handlePanelCreated,

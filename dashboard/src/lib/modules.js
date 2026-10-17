@@ -51,6 +51,15 @@ export const MODULES = [
     group: 'support'
   },
   {
+    id: 'security',
+    label: 'Security',
+    description: 'Anti-nuke, anti-raid, auto-mod, verification, lockdown and a trusted owner system.',
+    icon: 'security',
+    href: '/security',
+    matches: ['/security'],
+    group: 'server'
+  },
+  {
     id: 'settings',
     label: 'Settings',
     description: 'Prefix, premium and no-prefix access for this server.',

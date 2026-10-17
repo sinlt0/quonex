@@ -1,6 +1,6 @@
 const prisma = require('../db');
 const { DEFAULTS, findEntry, keysFor, MAX_EXTRA_OWNERS, MAX_WHITELIST_ENTRIES } = require('../../config/security');
-const { em } = require('../emojis');
+const { coerceStored, parseBool, extractId, parseValue, parseListItem } = require('./values');
 
 const CACHE_MS = 20 * 1000;
 const configCache = new Map();
@@ -11,22 +11,6 @@ const SNOWFLAKE = /^\d{15,25}$/;
 
 function cloneDefaults() {
   return JSON.parse(JSON.stringify(DEFAULTS));
-}
-
-function coerceStored(entry, value) {
-  switch (entry.type) {
-    case 'bool':
-      return typeof value === 'boolean' ? value : entry.default;
-    case 'int':
-    case 'float':
-      return typeof value === 'number' && Number.isFinite(value) ? value : entry.default;
-    case 'list':
-    case 'rolelist':
-    case 'userlist':
-      return Array.isArray(value) ? value : entry.default;
-    default:
-      return typeof value === 'string' ? value : entry.default;
-  }
 }
 
 async function loadConfig(guildId) {
@@ -65,72 +49,6 @@ async function writeStored(guildId, stored) {
   await prisma.guild.upsert({ where: { id: guildId }, update: {}, create: { id: guildId } });
   await prisma.securitySettings.upsert({ where: { guildId }, update: { config: stored }, create: { guildId, config: stored } });
   invalidate(guildId);
-}
-
-function parseBool(raw) {
-  const value = String(raw).trim().toLowerCase();
-  if (['true', 'on', 'yes', 'y', '1', 'enable', 'enabled'].includes(value)) return true;
-  if (['false', 'off', 'no', 'n', '0', 'disable', 'disabled'].includes(value)) return false;
-  return null;
-}
-
-function extractId(raw) {
-  const match = String(raw).match(/\d{15,25}/);
-  return match ? match[0] : null;
-}
-
-function parseValue(entry, raw) {
-  const text = String(raw).trim();
-
-  switch (entry.type) {
-    case 'bool': {
-      const value = parseBool(text);
-      return value === null ? { ok: false } : { ok: true, value };
-    }
-    case 'int': {
-      if (!/^-?\d+$/.test(text)) return { ok: false };
-      const value = Number.parseInt(text, 10);
-      if ((entry.min !== undefined && value < entry.min) || (entry.max !== undefined && value > entry.max)) return { ok: false, range: true };
-      return { ok: true, value };
-    }
-    case 'float': {
-      const value = Number.parseFloat(text);
-      if (!Number.isFinite(value)) return { ok: false };
-      if ((entry.min !== undefined && value < entry.min) || (entry.max !== undefined && value > entry.max)) return { ok: false, range: true };
-      return { ok: true, value: Math.round(value * 100) / 100 };
-    }
-    case 'enum': {
-      const value = (entry.options || []).find(option => option.toLowerCase() === text.toLowerCase());
-      return value ? { ok: true, value } : { ok: false };
-    }
-    case 'string':
-      return text.length <= 500 ? { ok: true, value: text } : { ok: false };
-    case 'role':
-    case 'channel': {
-      if (!text || ['none', 'off', 'clear'].includes(text.toLowerCase())) return { ok: true, value: '' };
-      const id = extractId(text);
-      return id ? { ok: true, value: id } : { ok: false };
-    }
-    default:
-      return { ok: false };
-  }
-}
-
-function parseListItem(entry, raw) {
-  const text = String(raw).trim();
-  if (!text) return { ok: false };
-
-  if (entry.type === 'rolelist' || entry.type === 'userlist') {
-    const id = extractId(text);
-    return id ? { ok: true, value: id } : { ok: false };
-  }
-
-  if (entry.options) {
-    const value = entry.options.find(option => option.toLowerCase() === text.toLowerCase());
-    return value ? { ok: true, value } : { ok: false };
-  }
-
-  return text.length <= 100 ? { ok: true, value: text.toLowerCase() } : { ok: false };
 }
 
 async function setValue(guildId, module, key, raw) {

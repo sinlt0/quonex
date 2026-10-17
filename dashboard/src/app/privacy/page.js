@@ -30,6 +30,12 @@ export default function PrivacyPage() {
             configured a transcript channel — this becomes a transcript stored in that channel, not a separate
             database of message contents
           </li>
+          <li>
+            If a server turns on web verification and you verify through it: your IP address (sent to an IP
+            intelligence service to check for VPNs, proxies and your country, and then stored only as a one-way
+            hash), and a hash of basic browser characteristics. These are used to spot VPN use and alt accounts and
+            are kept for the period the server chose, 90 days by default
+          </li>
         </ul>
         <p>
           We do not collect your email address, phone number, password, or payment information. There is no
@@ -82,6 +88,11 @@ export default function PrivacyPage() {
               Discord's Privacy Policy
             </a>
             .
+          </li>
+          <li>
+            The IP intelligence provider configured by the bot operator (for example ip-api.com, proxycheck.io or
+            vpnapi.io) — receives your IP address during web verification so it can say whether it belongs to a VPN or
+            proxy. We do not store the raw address.
           </li>
           <li>Our database hosting provider — stores the data described in Section 1, encrypted in transit.</li>
           <li>Whichever platform hosts the bot process and the dashboard — sees traffic metadata (not message content) as a normal part of running any server.</li>

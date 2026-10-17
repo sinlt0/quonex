@@ -379,4 +379,24 @@ Slash-command-first security suite. The dashboard module comes later and will be
 
 **Migration:** run `npx prisma migrate dev --name security_suite` (models: SecuritySettings, SecurityOwner, SecurityWhitelist, SecurityLog, QuarantineEntry, SecurityTimer, SecurityBackup, SecurityStrike, SecurityLock).
 
-**Not built yet:** dashboard Security module, ban sync across servers, VPN and alt detection.
+**Not built:** ban sync across servers (deliberately dropped).
+
+### Security dashboard
+
+Route `/servers/[guildId]/security` with tabs Overview, Anti-nuke, Anti-raid, Auto-mod, Verification, Lockdown, Trust, Backups, Logs, Settings. Module pages are one dynamic route (`[module]`) rendered from the registry: `src/config/securityGroups.js` groups every setting into sections, plus per-event (anti-nuke) and per-filter (auto-mod) rows, so a new registry entry shows up on the dashboard with no extra UI work. Changes are saved in one batch (`saveConfigAction`) and validated by the same `src/lib/security/values.js` the bot uses.
+
+**Access:** only the server owner, extra owners and (when `strictAccess` is off) Administrators can open or change anything; `lib/securityServer.js` enforces it on every action. Extra owners can only be added or removed by the owner. Whitelist changes need owner or extra owner.
+
+**Bot actions:** panic, raid mode, server lockdown, backup create/restore and posting the verification panel go through the internal API route `POST /api/security-action` (`src/lib/security/internal.js`). Presets, whitelist, owners, logs and backup deletes write straight to the database.
+
+### Web verification (VPN and alt detection)
+
+Verification method `web`. The panel button creates a single-use `WebVerifySession` and replies with a link button to `DASHBOARD_URL/verify/[guildId]?t=token`. The member signs in with Discord (the session user must match the token's user), the page collects a device fingerprint hash, and the server action `app/verify/[guildId]/actions.js` does the work: reads the client IP, asks the IP intelligence provider (`src/lib/security/webVerifyCore.js`), matches earlier `VerifiedIdentity` rows by hashed IP and device hash, and applies `decide()` using the `web*` verification settings. The result goes to the bot through `POST /api/security-action` action `web-verify`, which verifies, flags (verifies and alerts), quarantines or blocks. Trusted members (owner, extra owners, whitelist) always pass.
+
+**Env:** `DASHBOARD_URL` (bot, public dashboard URL, falls back to `AUTH_URL`), `IP_INTEL_PROVIDER` (`ip-api` default, `proxycheck`, `vpnapi`, `none`), `IP_INTEL_KEY` (needed for vpnapi and for HTTPS ip-api pro; without a key ip-api uses its free HTTP endpoint, which is for non-commercial use only), `VERIFY_HASH_SECRET` (falls back to `INTERNAL_API_SECRET`; changing it orphans stored hashes).
+
+**Privacy:** raw IPs are never stored, only an HMAC. VPN exit IPs are not stored or matched, to avoid false alt matches on shared exits. Records are pruned after `webRetentionDays`, `/verification forget` deletes one member. The privacy page lists this. If the IP lookup fails the check fails open (no VPN flag).
+
+**Limits:** shared IPs (households, schools, mobile carriers) and identical devices can match, so the default alt action is flag, not block. Only ip-api reports hosting and datacenter IPs.
+
+**Migration:** `web_verification` (models WebVerifySession, VerifiedIdentity).

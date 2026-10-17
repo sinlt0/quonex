@@ -719,7 +719,7 @@
     "name": "verification",
     "description": "Verify members with a button, captcha or passphrase before they get in",
     "category": "Security",
-    "usage": "/verification <setup|panel|mode|rules|panel-style|status|enable|disable|verify|unverify|view|set|add|remove|reset>",
+    "usage": "/verification <setup|panel|mode|rules|panel-style|web|alts|forget|status|enable|disable|verify|unverify|view|set|add|remove|reset>",
     "hidden": false,
     "subcommands": [
       {
@@ -732,7 +732,7 @@
       },
       {
         "name": "mode",
-        "description": "Change how members verify"
+        "description": "Change how members verify (button, captcha, passphrase or web)"
       },
       {
         "name": "rules",
@@ -741,6 +741,18 @@
       {
         "name": "panel-style",
         "description": "Customize the panel text"
+      },
+      {
+        "name": "forget",
+        "description": "Delete the stored web verification data for a member"
+      },
+      {
+        "name": "alts",
+        "description": "Show members who share an IP or device with someone"
+      },
+      {
+        "name": "web",
+        "description": "Web verification: VPN, alt and country checks"
       },
       {
         "name": "status",

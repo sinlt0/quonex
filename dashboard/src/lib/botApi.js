@@ -93,3 +93,7 @@ export async function notifyReactionRoleAdd({ guildId, channelId, messageId, emo
 export async function notifyReactionRoleRemove({ guildId, id }) {
   return callBotApi('/api/reaction-role-remove', { guildId, id });
 }
+
+export async function notifySecurityAction(body) {
+  return callBotApi('/api/security-action', body);
+}

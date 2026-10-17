@@ -101,7 +101,7 @@ function buildRegistry() {
   add('antiraid', 'minAccountAgeAction', 'enum', 'kick', 'Join gate: action for young accounts', { options: RAID_ACTIONS });
   add('antiraid', 'noAvatar', 'bool', false, 'Join gate: act on accounts with no avatar');
   add('antiraid', 'noAvatarAction', 'enum', 'verify', 'Join gate: action for no avatar', { options: RAID_ACTIONS });
-  add('antiraid', 'usernamePatterns', 'list', [], 'Join gate: regex patterns for blocked usernames');
+  add('antiraid', 'usernamePatterns', 'list', [], 'Join gate: regex patterns for blocked usernames', { keepCase: true });
   add('antiraid', 'usernamePatternAction', 'enum', 'kick', 'Join gate: action for matching usernames', { options: RAID_ACTIONS });
   add('antiraid', 'blockInviteUsernames', 'bool', true, 'Join gate: act on usernames that advertise an invite');
   add('antiraid', 'inviteUsernameAction', 'enum', 'ban', 'Join gate: action for invite usernames', { options: RAID_ACTIONS });
@@ -154,7 +154,7 @@ function buildRegistry() {
   }
 
   add('verification', 'enabled', 'bool', false, 'Turn verification on');
-  add('verification', 'mode', 'enum', 'captcha', 'How members verify', { options: ['button', 'captcha', 'passphrase'] });
+  add('verification', 'mode', 'enum', 'captcha', 'How members verify', { options: ['button', 'captcha', 'passphrase', 'web'] });
   add('verification', 'scope', 'enum', 'all', 'Who must verify', { options: ['all', 'suspicious'] });
   add('verification', 'suspiciousAgeDays', 'int', 14, 'Accounts younger than this count as suspicious', { min: 0, max: 365 });
   add('verification', 'verifiedRoleId', 'role', '', 'Role given after verifying');
@@ -168,6 +168,18 @@ function buildRegistry() {
   add('verification', 'failTimeoutMinutes', 'int', 60, 'Timeout length when failAction is timeout', { min: 1, max: 40320 });
   add('verification', 'dmOnJoin', 'bool', false, 'DM instructions when someone joins');
   add('verification', 'logSuccess', 'bool', true, 'Log successful verifications');
+  const WEB_ACTIONS = ['allow', 'flag', 'quarantine', 'block'];
+  add('verification', 'webVpnAction', 'enum', 'block', 'Web verification: action when a VPN, proxy or Tor connection is detected', { options: WEB_ACTIONS });
+  add('verification', 'webHostingCounts', 'bool', true, 'Web verification: treat datacenter and hosting IPs like a VPN');
+  add('verification', 'webAltAction', 'enum', 'flag', 'Web verification: action when the member shares an IP or device with another verified member', { options: WEB_ACTIONS });
+  add('verification', 'webAltMatchIp', 'bool', true, 'Web verification: match alts by IP address');
+  add('verification', 'webAltMatchFingerprint', 'bool', true, 'Web verification: match alts by device fingerprint');
+  add('verification', 'webCountryAction', 'enum', 'block', 'Web verification: action for blocked or not allowed countries', { options: WEB_ACTIONS });
+  add('verification', 'webBlockedCountries', 'list', [], 'Web verification: blocked country codes like ru or cn', { pattern: '^[a-z]{2}$' });
+  add('verification', 'webAllowedCountries', 'list', [], 'Web verification: only allow these country codes (empty allows every country)', { pattern: '^[a-z]{2}$' });
+  add('verification', 'webRetentionDays', 'int', 90, 'Web verification: days to remember hashed IPs and devices for alt matching', { min: 1, max: 3650 });
+  add('verification', 'webLinkMinutes', 'int', 15, 'Web verification: minutes a verification link stays valid', { min: 2, max: 120 });
+  add('verification', 'webMaxAttempts', 'int', 3, 'Web verification: tries per link', { min: 1, max: 10 });
   add('verification', 'panelChannelId', 'channel', '', 'Channel holding the verification panel');
   add('verification', 'panelMessageId', 'string', '', 'Internal: panel message ID');
   add('verification', 'panelTitle', 'string', 'Verify to enter', 'Panel title');

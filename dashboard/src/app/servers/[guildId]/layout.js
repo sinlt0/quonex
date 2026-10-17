@@ -14,12 +14,13 @@ export default async function GuildLayout({ children, params }) {
   const guild = guilds.find(item => item.id === guildId);
   if (!guild) redirect('/servers');
 
-  const [greet, levels, panelCount, applicationPanelCount, liveInteractiveCount] = await Promise.all([
+  const [greet, levels, panelCount, applicationPanelCount, liveInteractiveCount, securityRow] = await Promise.all([
     prisma.greetSettings.findUnique({ where: { guildId } }),
     prisma.levelSettings.findUnique({ where: { guildId } }),
     prisma.panel.count({ where: { guildId } }),
     prisma.applicationPanel.count({ where: { guildId } }),
-    prisma.interactiveMessage.count({ where: { guildId, messageId: { not: null } } })
+    prisma.interactiveMessage.count({ where: { guildId, messageId: { not: null } } }),
+    prisma.securitySettings.findUnique({ where: { guildId } })
   ]);
 
   const statuses = {
@@ -27,7 +28,8 @@ export default async function GuildLayout({ children, params }) {
     levels: Boolean(levels?.enabled),
     roles: liveInteractiveCount > 0,
     applications: applicationPanelCount > 0,
-    tickets: panelCount > 0
+    tickets: panelCount > 0,
+    security: Boolean(securityRow?.config && ['antinuke', 'antiraid', 'automod', 'verification'].some(key => securityRow.config[key]?.enabled))
   };
 
   return (

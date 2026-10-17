@@ -373,3 +373,35 @@ model SecurityLock {
 
   @@unique([guildId, channelId])
 }
+
+model WebVerifySession {
+  id        String    @id @default(cuid())
+  guildId   String
+  userId    String
+  token     String    @unique
+  attempts  Int       @default(0)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([guildId, userId])
+  @@index([expiresAt])
+}
+
+model VerifiedIdentity {
+  id        String   @id @default(cuid())
+  guildId   String
+  userId    String
+  ipHash    String
+  fpHash    String?
+  vpn       Boolean  @default(false)
+  vpnKind   String?
+  country   String?
+  verdict   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([guildId, userId])
+  @@index([guildId, ipHash])
+  @@index([guildId, fpHash])
+}

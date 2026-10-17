@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
+const prisma = require('../../../../lib/db');
 const { requireAccess } = require('../../../../lib/security/access');
 const kit = require('../../../../lib/security/commandKit');
 const store = require('../../../../lib/security/store');
@@ -20,7 +21,7 @@ function data() {
         .addChannelOption(option => option.setName('channel').setDescription('Where to post the verify panel').addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement).setRequired(true))
         .addRoleOption(option => option.setName('verified-role').setDescription('Role given after verifying'))
         .addRoleOption(option => option.setName('unverified-role').setDescription('Role given on join and removed after verifying'))
-        .addStringOption(option => option.setName('mode').setDescription('How members verify').addChoices({ name: 'button', value: 'button' }, { name: 'captcha', value: 'captcha' }, { name: 'passphrase', value: 'passphrase' }))
+        .addStringOption(option => option.setName('mode').setDescription('How members verify').addChoices({ name: 'button', value: 'button' }, { name: 'captcha', value: 'captcha' }, { name: 'passphrase', value: 'passphrase' }, { name: 'web (VPN and alt detection)', value: 'web' }))
         .addStringOption(option => option.setName('scope').setDescription('Who must verify').addChoices({ name: 'everyone', value: 'all' }, { name: 'suspicious accounts only', value: 'suspicious' }))
     )
     .addSubcommand(sub =>
@@ -33,7 +34,7 @@ function data() {
       sub
         .setName('mode')
         .setDescription('Change how members verify')
-        .addStringOption(option => option.setName('type').setDescription('Mode').setRequired(true).addChoices({ name: 'button', value: 'button' }, { name: 'captcha', value: 'captcha' }, { name: 'passphrase', value: 'passphrase' }))
+        .addStringOption(option => option.setName('type').setDescription('Mode').setRequired(true).addChoices({ name: 'button', value: 'button' }, { name: 'captcha', value: 'captcha' }, { name: 'passphrase', value: 'passphrase' }, { name: 'web (VPN and alt detection)', value: 'web' }))
         .addStringOption(option => option.setName('passphrase').setDescription('Phrase to type (passphrase mode)').setMaxLength(100))
         .addStringOption(option => option.setName('difficulty').setDescription('Captcha difficulty').addChoices({ name: 'easy', value: 'easy' }, { name: 'medium', value: 'medium' }, { name: 'hard', value: 'hard' }))
         .addIntegerOption(option => option.setName('length').setDescription('Captcha length').setMinValue(4).setMaxValue(8))
@@ -57,6 +58,27 @@ function data() {
         .addStringOption(option => option.setName('button').setDescription('Button label').setMaxLength(40))
         .addStringOption(option => option.setName('color').setDescription('Accent color like #6f5de0').setMaxLength(7))
     )
+    .addSubcommand(sub => {
+      const actions = [{ name: 'allow', value: 'allow' }, { name: 'flag (verify but alert staff)', value: 'flag' }, { name: 'quarantine', value: 'quarantine' }, { name: 'block', value: 'block' }];
+      return sub
+        .setName('web')
+        .setDescription('Web verification: VPN, alt and country checks')
+        .addStringOption(option => option.setName('vpn-action').setDescription('When a VPN, proxy or Tor is detected').addChoices(...actions))
+        .addStringOption(option => option.setName('alt-action').setDescription('When the member shares an IP or device with another member').addChoices(...actions))
+        .addStringOption(option => option.setName('country-action').setDescription('For blocked or not allowed countries').addChoices(...actions))
+        .addBooleanOption(option => option.setName('hosting').setDescription('Treat datacenter IPs like a VPN'))
+        .addBooleanOption(option => option.setName('match-ip').setDescription('Match alts by IP'))
+        .addBooleanOption(option => option.setName('match-device').setDescription('Match alts by device fingerprint'))
+        .addStringOption(option => option.setName('block-country').setDescription('Block a country code, like ru'))
+        .addStringOption(option => option.setName('unblock-country').setDescription('Unblock a country code'))
+        .addStringOption(option => option.setName('only-country').setDescription('Only allow this country code (repeat to allow several)'))
+        .addStringOption(option => option.setName('remove-only-country').setDescription('Remove a country code from the allowed list'))
+        .addIntegerOption(option => option.setName('retention-days').setDescription('Days to remember hashed IPs and devices').setMinValue(1).setMaxValue(3650))
+        .addIntegerOption(option => option.setName('link-minutes').setDescription('Minutes a verification link works').setMinValue(2).setMaxValue(120))
+        .addIntegerOption(option => option.setName('attempts').setDescription('Tries per link').setMinValue(1).setMaxValue(10));
+    })
+    .addSubcommand(sub => sub.setName('alts').setDescription('Show members who share an IP or device with someone').addUserOption(option => option.setName('user').setDescription('Member').setRequired(true)))
+    .addSubcommand(sub => sub.setName('forget').setDescription('Delete the stored web verification data for a member').addUserOption(option => option.setName('user').setDescription('Member').setRequired(true)))
     .addSubcommand(sub => sub.setName('status').setDescription('Show verification settings'))
     .addSubcommand(sub => sub.setName('enable').setDescription('Turn verification on'))
     .addSubcommand(sub => sub.setName('disable').setDescription('Turn verification off'))
@@ -96,10 +118,76 @@ async function status(interaction) {
   await kit.send(interaction, lines);
 }
 
+async function web(interaction) {
+  const guildId = interaction.guild.id;
+  const o = interaction.options;
+  const config = (await store.loadConfig(guildId))[MODULE];
+  const pairs = [['webVpnAction', o.getString('vpn-action')], ['webAltAction', o.getString('alt-action')], ['webCountryAction', o.getString('country-action')], ['webHostingCounts', o.getBoolean('hosting')], ['webAltMatchIp', o.getBoolean('match-ip')], ['webAltMatchFingerprint', o.getBoolean('match-device')], ['webRetentionDays', o.getInteger('retention-days')], ['webLinkMinutes', o.getInteger('link-minutes')], ['webMaxAttempts', o.getInteger('attempts')]];
+  const changes = pairs.filter(([, value]) => value !== null);
+  const listOps = [['webBlockedCountries', o.getString('block-country'), true], ['webBlockedCountries', o.getString('unblock-country'), false], ['webAllowedCountries', o.getString('only-country'), true], ['webAllowedCountries', o.getString('remove-only-country'), false]].filter(([, value]) => value);
+
+  for (const [key, value] of changes) {
+    const result = await store.setValue(guildId, MODULE, key, String(value));
+    if (!result.ok) {
+      await kit.send(interaction, [`${em.error} Could not set ${key}.`]);
+      return;
+    }
+  }
+  for (const [key, value, add] of listOps) {
+    const result = await store.mutateList(guildId, MODULE, key, value.trim(), add);
+    if (!result.ok) {
+      await kit.send(interaction, [`${em.error} Use a two-letter country code like ru or us.`]);
+      return;
+    }
+  }
+
+  const fresh = (await store.loadConfig(guildId))[MODULE];
+  const lines = [
+    `${changes.length || listOps.length ? `${em.success} Updated.` : '**Web verification**'}`,
+    `Active when the method is **web** (now **${fresh.mode}**). VPN: **${fresh.webVpnAction}** · alts: **${fresh.webAltAction}** · country: **${fresh.webCountryAction}**`,
+    `Datacenter IPs count as VPN: ${kit.onOff(fresh.webHostingCounts)} · match by IP ${kit.onOff(fresh.webAltMatchIp)} · by device ${kit.onOff(fresh.webAltMatchFingerprint)}`,
+    `Blocked countries: ${fresh.webBlockedCountries.length ? fresh.webBlockedCountries.map(code => `\`${code}\``).join(' ') : '*none*'} · only allow: ${fresh.webAllowedCountries.length ? fresh.webAllowedCountries.map(code => `\`${code}\``).join(' ') : '*everywhere*'}`,
+    `Link valid **${fresh.webLinkMinutes}** min · **${fresh.webMaxAttempts}** tries · remember **${fresh.webRetentionDays}** days`
+  ];
+  if (!process.env.DASHBOARD_URL && !process.env.AUTH_URL) lines.push(`${em.error} DASHBOARD_URL is not set on the bot, so web verification links cannot be created.`);
+  await kit.send(interaction, lines);
+}
+
+async function alts(interaction) {
+  const guildId = interaction.guild.id;
+  const user = interaction.options.getUser('user');
+  const identity = await prisma.verifiedIdentity.findUnique({ where: { guildId_userId: { guildId, userId: user.id } } });
+  if (!identity) {
+    await kit.send(interaction, [`No web verification data stored for <@${user.id}>.`]);
+    return;
+  }
+  const or = [];
+  if (identity.ipHash) or.push({ ipHash: identity.ipHash });
+  if (identity.fpHash) or.push({ fpHash: identity.fpHash });
+  const matches = or.length ? await prisma.verifiedIdentity.findMany({ where: { guildId, userId: { not: user.id }, OR: or }, take: 15 }) : [];
+  const lines = [`**<@${user.id}>** verified <t:${Math.floor(identity.createdAt.getTime() / 1000)}:R> · ${identity.vpn ? `VPN (${identity.vpnKind || 'vpn'})` : 'no VPN'} · country ${identity.country ? identity.country.toUpperCase() : 'unknown'} · result **${identity.verdict}**`];
+  if (!matches.length) lines.push('No linked accounts found.');
+  else {
+    lines.push('Linked accounts:');
+    for (const match of matches) {
+      const by = [identity.ipHash && match.ipHash === identity.ipHash ? 'same IP' : null, identity.fpHash && match.fpHash === identity.fpHash ? 'same device' : null].filter(Boolean).join(' + ');
+      lines.push(`• <@${match.userId}> — ${by}`);
+    }
+    lines.push('-# Shared IPs can be households or schools. Treat a match as a lead, not proof.');
+  }
+  await kit.send(interaction, kit.clip(lines));
+}
+
+async function forget(interaction) {
+  const user = interaction.options.getUser('user');
+  const result = await prisma.verifiedIdentity.deleteMany({ where: { guildId: interaction.guild.id, userId: user.id } });
+  await kit.send(interaction, [result.count ? `${em.success} Deleted the stored data for <@${user.id}>.` : 'Nothing was stored for that member.']);
+}
+
 module.exports = {
   data: data(),
   category: 'Security',
-  usage: '/verification <setup|panel|mode|rules|panel-style|status|enable|disable|verify|unverify|view|set|add|remove|reset>',
+  usage: '/verification <setup|panel|mode|rules|panel-style|web|alts|forget|status|enable|disable|verify|unverify|view|set|add|remove|reset>',
   async autocomplete(interaction) {
     if (!interaction.guild) return;
     await kit.configAutocomplete(interaction, MODULE);
@@ -111,6 +199,9 @@ module.exports = {
     const o = interaction.options;
 
     if (sub === 'status') return status(interaction);
+    if (sub === 'web') return web(interaction);
+    if (sub === 'alts') return alts(interaction);
+    if (sub === 'forget') return forget(interaction);
 
     if (sub === 'setup') {
       const channel = o.getChannel('channel');

@@ -6,7 +6,7 @@ import { MODULES } from '../../../lib/modules';
 export default async function GuildOverviewPage({ params }) {
   const { guildId } = await params;
 
-  const [guildRow, panelCount, openTicketCount, pendingApplicationCount, greet, levels, applicationPanelCount, liveInteractiveCount] = await Promise.all([
+  const [guildRow, panelCount, openTicketCount, pendingApplicationCount, greet, levels, applicationPanelCount, liveInteractiveCount, securityRow] = await Promise.all([
     prisma.guild.findUnique({ where: { id: guildId }, include: { premium: true } }),
     prisma.panel.count({ where: { guildId } }),
     prisma.ticket.count({ where: { guildId, status: 'open' } }),
@@ -14,7 +14,8 @@ export default async function GuildOverviewPage({ params }) {
     prisma.greetSettings.findUnique({ where: { guildId } }),
     prisma.levelSettings.findUnique({ where: { guildId } }),
     prisma.applicationPanel.count({ where: { guildId } }),
-    prisma.interactiveMessage.count({ where: { guildId, messageId: { not: null } } })
+    prisma.interactiveMessage.count({ where: { guildId, messageId: { not: null } } }),
+    prisma.securitySettings.findUnique({ where: { guildId } })
   ]);
 
   const premium = guildRow?.premium;
@@ -33,7 +34,8 @@ export default async function GuildOverviewPage({ params }) {
     levels: Boolean(levels?.enabled),
     roles: liveInteractiveCount > 0,
     applications: applicationPanelCount > 0,
-    tickets: panelCount > 0
+    tickets: panelCount > 0,
+    security: Boolean(securityRow?.config && ['antinuke', 'antiraid', 'automod', 'verification'].some(key => securityRow.config[key]?.enabled))
   };
 
   return (

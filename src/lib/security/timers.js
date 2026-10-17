@@ -52,6 +52,11 @@ async function pruneLogs() {
     await prisma.securityLog.deleteMany({ where: { guildId: row.guildId, createdAt: { lt: new Date(Date.now() - days * 86400000) } } });
   }
   await prisma.securityLog.deleteMany({ where: { createdAt: { lt: new Date(Date.now() - 365 * 86400000) } } });
+  await prisma.webVerifySession.deleteMany({ where: { expiresAt: { lt: new Date(Date.now() - 86400000) } } });
+  for (const row of rows) {
+    const days = row.config && row.config.verification && row.config.verification.webRetentionDays ? row.config.verification.webRetentionDays : 90;
+    await prisma.verifiedIdentity.deleteMany({ where: { guildId: row.guildId, updatedAt: { lt: new Date(Date.now() - days * 86400000) } } });
+  }
 }
 
 function startSecuritySweeper(client) {
