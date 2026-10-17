@@ -62,6 +62,8 @@ npm run deploy          # register slash commands
 npm start                # start the bot
 ```
 
+## **Quonex Emoji Server** : https://discord.gg/euNgRfpn5K
+
 For local dashboard development, Prisma setup details, the bot↔dashboard
 communication design, environment variables, and the full command
 reference, see **[DEVELOPMENT.md](./DEVELOPMENT.md)**.
