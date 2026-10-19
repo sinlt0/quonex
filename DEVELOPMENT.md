@@ -404,3 +404,54 @@ Verification method `web`. The panel button creates a single-use `WebVerifySessi
 ### Discord sign-in (session handling)
 
 `dashboard/src/auth.js` stores the Discord refresh token and expiry in the session JWT and refreshes the access token a couple of minutes before it expires (Discord tokens last 7 days, the session lasts 30). If the refresh fails the session is treated as signed out and the user is sent back to sign in, instead of landing on an empty server list. Sessions created before this change have no refresh token and ask for one fresh sign-in. `getUserManageableGuilds` in `lib/discord.js` now caches the guild list per token for 45 seconds and shares in-flight requests, so one page load no longer makes several calls to Discord and rate limits no longer empty the list.
+
+## Moderation
+
+**Commands (`src/bot/commands/slash/moderation/`):** `ban` (permanent or timed), `unban` (autocomplete from the ban list), `softban`, `massban`, `kick`, `timeout`, `untimeout`, `warn`, `warnings`, `case`, `history`, `purge` (all, user, bots, humans, links, invites, attachments, embeds, contains), `nuke`, `slowmode`, `nick`. Each uses Discord default permissions plus the checks below.
+
+**Engine (`src/lib/moderation/engine.js`):** every action goes through `checkTarget` (self, bot, server owner, security trust list when `moderation.protectTrusted`, `immuneRoleIds`, moderator and bot role hierarchy), optionally DMs the user (`dmOnAction`, `appealText`), creates a numbered `ModCase` (`cases.js`, counter in `ModCounter`) and posts to `moderation.logChannelId`, falling back to the security log channel.
+
+**Security integration:** moderator bans, kicks and timeouts are fed to anti-nuke through `recordModAction`, so a compromised moderator account hits the same rolling limits and punishments as any other actor (`moderation.countTowardAntiNuke`). Whitelisted and owner accounts follow the normal trust tiers. `punish()` records an automatic case for security-driven timeouts, kicks, bans and quarantines. Temporary bans use `SecurityTimer` kind `unban`. Warnings escalate to timeout, kick or ban at configurable counts and can expire. `massban` and `nuke` are trusted-only by default; `nuke` refuses channels used by panels, tickets, greets, levels or interactive messages, and repoints log and lock references to the new channel.
+
+**Settings:** the `moderation` module in the security registry (dashboard tab Moderation, `/security config`).
+
+**Migration:** `npx prisma db push` (models: ModCase, ModCounter).
+
+Every moderation command also exists as a prefix command (`src/bot/commands/text/moderation/`, plus `prefix` in `text/config/`). Purge and nuke share their logic with the slash versions through `src/lib/moderation/{purge,nuke}.js`; prefix argument helpers live in `src/lib/moderation/textKit.js`.
+
+## Temp Voice
+
+**Research basis:** TempVoice, VoiceMaster and Voice Manager style join-to-create bots. Common features were lobbies with name templates, owner controls (rename, limit, lock, hide, permit, reject, kick, transfer, claim), a control panel in the room chat, saved owner profiles, role limits on who may create or use features, and logging. Quonex adds the security integration below.
+
+**Models:** `TempVoiceSettings`, `TempVoiceLobby`, `TempVoiceChannel`, `TempVoiceProfile` (new models via `prisma db push`).
+
+**Code (`src/lib/tempvoice/`):** `manager.js` (voice state handling, creation, ownership, grace hand-over, all owner actions through `run()`), `panel.js` (CV2 control panel), `interactions.js` (`tv:` buttons, user selects and modals), `store.js`, `names.js` (templates and name sanitising). Events: `voiceStateUpdate`, `channelDelete` (cleanup), startup sweep in `ready`.
+
+**Commands:** `/tempvoice` (setup, edit, remove, list, settings, close; needs Manage Channels), `/voice` (everything an owner can do), prefix `voice`. Dashboard page `/servers/[guildId]/voice`.
+
+**Security integration:** creation is paused during raid mode and panic mode (`blockDuringRaid`), quarantined members cannot create rooms, owners cannot reject, kick or block staff, the server owner, the security trust list or the bot, names are stripped of mentions, links and invites, and creation is rate limited per user and per server. Staff with Manage Channels can manage any room.
+
+**Emojis:** `src/emojis/tempvoice.js` holds placeholder IDs to replace.
+
+### Appeals, reports, notes, watchlist, insights, message logs
+
+**Appeals (`src/lib/moderation/appeals.js`):** ban and tempban DMs carry an **Appeal this ban** button (`ap:start:<guildId>`, works in DMs). The modal checks the user is really banned, has no pending appeal and is past `appealCooldownDays`, then posts a review message with Approve and Deny buttons to `appealChannelId`, falling back to the moderation log and then the security log channel. Approving calls the normal `unbanUser` (so a case is created), denying asks for an optional note. Both DM the user. `/appeal list|view` for staff. Model `ModAppeal`.
+
+**Reports (`reports.js`):** **Report message** context menu and `/report <link>` open a modal. Reports are de-duplicated per message (more reporters edit the same post), rate limited (30s, 5 open per reporter) and posted with Delete, Warn, Timeout 1h, Ban and Resolve buttons that call the moderation engine, so they create cases and respect protection rules. Model `ModReport`.
+
+**Notes and watchlist (`watch.js`, `/note`, `/watchlist`):** staff notes per member (`ModNote`, max 50) and a watchlist (`ModWatch`, max 100) that alerts on join and on first message per hour. `/history` shows both.
+
+**Insights (`insights.js`):** `/modstats [days] [moderator]` and an optional weekly report (`moderation.weeklyReport`) posted to the moderation log channel. The dashboard has Cases, Appeals and Reports tabs under Security (read-only history, stats and filters).
+
+**Message logs (`msglog.js`):** edits, deletes, bulk deletes (with a text transcript), re-uploaded attachments and ghost pings go to `moderation.msgLogChannelId`. Only messages still in the bot cache (200 per channel by default) can be logged. Deletions made by the bot itself (auto-mod, purge) are suppressed through `markQuiet` and `markQuietChannel` because they are logged elsewhere.
+
+**Migration:** `npx prisma db push` (models ModAppeal, ModReport, ModNote, ModWatch and new ModCounter columns).
+
+### Guided setup wizards
+
+`/security setup` and `/verification setup` run a Components V2 wizard (`src/lib/security/wizard.js`). A wizard is a declarative definition: `{ title, initial, steps:[{id,title,text,fields,show,validate,review}], summary, onChange, apply, after }`. Field types are `select` (single or multi), `bool`, `channel` (optional create button), `role` and `text` (modal). The engine renders one ephemeral container per step with Back, Next/Apply and Cancel, scopes the collector to the invoking user for 15 minutes and applies nothing until Apply.
+
+- `wizards/securitySetup.js`: protection level, anti-nuke, anti-raid, auto-mod filters, moderation extras, log channels, safety net. Defaults follow the chosen preset (`onChange` recomputes them). Apply calls `runFullSetup` in `fullSetup.js`, which writes the config, creates the private **Quonex Security** category and log channels (existing ones are kept), the quarantine role, auto backups and a baseline backup, and reports missing permissions and manual leftovers. It embeds the verification steps from `wizards/verification.js` behind an "Also set up member verification" toggle, so one run can do both.
+- `wizards/verification.js`: method, roles (create or pick), panel channel, rules, suspicious-account scope and web options. Apply creates the channel and roles, hides channels from the unverified role, saves settings and posts the panel.
+
+`/verification setup` stays available on its own. Both are safe to rerun and delete nothing.

@@ -11,7 +11,8 @@ const LIMITS = {
     levelRoleRewards: 15,
     xpMultipliers: 5,
     interactiveMessages: 5,
-    reactionRoles: 15
+    reactionRoles: 15,
+    voiceLobbies: 2
   },
   premium: {
     panels: 10,
@@ -25,7 +26,8 @@ const LIMITS = {
     levelRoleRewards: 30,
     xpMultipliers: 15,
     interactiveMessages: 15,
-    reactionRoles: 50
+    reactionRoles: 50,
+    voiceLobbies: 10
   }
 };
 

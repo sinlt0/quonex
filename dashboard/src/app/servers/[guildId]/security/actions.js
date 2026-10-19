@@ -15,7 +15,7 @@ import {
   NUKE_EVENTS
 } from '../../../../lib/securityServer';
 
-const MODULES = ['core', 'antinuke', 'antiraid', 'automod', 'verification', 'lockdown'];
+const MODULES = ['core', 'antinuke', 'antiraid', 'automod', 'verification', 'lockdown', 'moderation'];
 const KINDS = ['user', 'role', 'channel'];
 const DENIED = { ok: false, error: 'Only the server owner or an extra owner can do that.' };
 

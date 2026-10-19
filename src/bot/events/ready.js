@@ -2,6 +2,8 @@ const { startBotStatusHeartbeat } = require('../../lib/botStatus');
 const { startInternalApi } = require('../../lib/internalApi');
 const { startVoiceXp } = require('../../lib/levels');
 const { startTempRoleSweeper } = require('../../lib/interactive');
+const { startModReports } = require('../../lib/moderation/insights');
+const { sweep: sweepTempVoice } = require('../../lib/tempvoice/manager');
 const { startSecuritySweeper } = require('../../lib/security/timers');
 
 module.exports = {
@@ -14,5 +16,7 @@ module.exports = {
     startVoiceXp(client);
     startTempRoleSweeper(client);
     startSecuritySweeper(client);
+    startModReports(client);
+    sweepTempVoice(client).catch(error => console.error('Temp voice sweep failed:', error));
   }
 };

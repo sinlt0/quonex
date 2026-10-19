@@ -31,6 +31,15 @@ const SECTIONS = {
     { id: 'web', title: 'Web verification', description: 'Used when the method is web. Members confirm on the dashboard, where VPNs and alt accounts are checked.', keys: ['webVpnAction', 'webHostingCounts', 'webAltAction', 'webAltMatchIp', 'webAltMatchFingerprint', 'webCountryAction', 'webBlockedCountries', 'webAllowedCountries', 'webRetentionDays', 'webLinkMinutes', 'webMaxAttempts'] },
     { id: 'panel', title: 'Panel', description: 'The message members click to verify.', keys: ['panelChannelId', 'panelTitle', 'panelText', 'panelButton', 'panelColor'] }
   ],
+  moderation: [
+    { id: 'general', title: 'General', description: 'Logging and what members are told.', keys: ['logChannelId', 'dmOnAction', 'appealText', 'requireReason', 'defaultReason', 'defaultBanDeleteDays'] },
+    { id: 'protection', title: 'Protection and abuse limits', description: 'Who cannot be moderated and how moderator actions tie into anti-nuke.', keys: ['protectTrusted', 'immuneRoleIds', 'countTowardAntiNuke', 'massBanTrustedOnly', 'massBanMax', 'nukeTrustedOnly'] },
+    { id: 'purge', title: 'Purge', description: 'Limits for /purge.', keys: ['maxPurge', 'purgeKeepPinned', 'purgeLog'] },
+    { id: 'warnings', title: 'Warnings', description: 'Automatic punishment when warnings add up.', keys: ['warnExpireDays', 'warnTimeoutAt', 'warnTimeoutMinutes', 'warnKickAt', 'warnBanAt'] },
+    { id: 'appeals', title: 'Appeals', description: 'Banned members appeal from their ban DM and staff approve or deny with buttons.', keys: ['appealsEnabled', 'appealChannelId', 'appealCooldownDays', 'appealMinChars'] },
+    { id: 'reports', title: 'Reports, watchlist and insights', description: 'Member reports, watchlist alerts and the weekly moderator report.', keys: ['reportsEnabled', 'reportChannelId', 'reportPingRoleId', 'watchChannelId', 'weeklyReport'] },
+    { id: 'messagelogs', title: 'Message logs', description: 'Edits, deletes, purges and ghost pings. Only messages the bot still has cached can be logged.', keys: ['msgLogChannelId', 'logEdits', 'logDeletes', 'logBulkDeletes', 'logAttachments', 'ghostPing', 'logIgnoreBots', 'logIgnoreChannelIds'] }
+  ],
   lockdown: [
     { id: 'lockdown', title: 'Lockdown behavior', description: 'What a lockdown denies and announces.', keys: ['denyReactions', 'denyThreads', 'denyVoice', 'announce', 'lockMessage', 'unlockMessage', 'defaultMinutes'] }
   ]

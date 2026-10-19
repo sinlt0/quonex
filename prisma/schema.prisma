@@ -405,3 +405,152 @@ model VerifiedIdentity {
   @@index([guildId, ipHash])
   @@index([guildId, fpHash])
 }
+
+model ModCase {
+  id          String    @id @default(cuid())
+  guildId     String
+  caseNumber  Int
+  userId      String
+  moderatorId String
+  action      String
+  reason      String?
+  duration    Int?
+  auto        Boolean   @default(false)
+  active      Boolean   @default(true)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([guildId, caseNumber])
+  @@index([guildId, userId])
+  @@index([guildId, createdAt])
+}
+
+model ModCounter {
+  guildId      String    @id
+  last         Int       @default(0)
+  lastAppeal   Int       @default(0)
+  lastReport   Int       @default(0)
+  lastReportAt DateTime?
+}
+
+model ModAppeal {
+  id         String    @id @default(cuid())
+  guildId    String
+  number     Int
+  userId     String
+  caseNumber Int?
+  text       String
+  status     String    @default("pending")
+  reviewerId String?
+  reviewNote String?
+  channelId  String?
+  messageId  String?
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  @@unique([guildId, number])
+  @@index([guildId, status])
+  @@index([guildId, userId])
+}
+
+model ModReport {
+  id              String    @id @default(cuid())
+  guildId         String
+  number          Int
+  reporterIds     String[]  @default([])
+  reasons         String[]  @default([])
+  targetId        String
+  channelId       String
+  messageId       String
+  content         String?
+  attachments     Int       @default(0)
+  status          String    @default("open")
+  actions         String[]  @default([])
+  handlerId       String?
+  reportChannelId String?
+  reportMessageId String?
+  createdAt       DateTime  @default(now())
+  resolvedAt      DateTime?
+
+  @@unique([guildId, number])
+  @@unique([guildId, messageId])
+  @@index([guildId, status])
+}
+
+model ModNote {
+  id        Int      @id @default(autoincrement())
+  guildId   String
+  userId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([guildId, userId])
+}
+
+model ModWatch {
+  guildId   String
+  userId    String
+  reason    String?
+  addedBy   String
+  createdAt DateTime @default(now())
+
+  @@id([guildId, userId])
+}
+
+model TempVoiceSettings {
+  guildId            String   @id
+  logChannelId       String?
+  saveProfiles       Boolean  @default(true)
+  autoTransfer       Boolean  @default(true)
+  graceSeconds       Int      @default(30)
+  maxChannels        Int      @default(50)
+  blockDuringRaid    Boolean  @default(true)
+  allowInvites       Boolean  @default(false)
+  panelEnabled       Boolean  @default(true)
+  createdAt          DateTime @default(now())
+}
+
+model TempVoiceLobby {
+  id             String   @id @default(cuid())
+  guildId        String
+  channelId      String   @unique
+  categoryId     String?
+  nameTemplate   String   @default("{username}'s room")
+  userLimit      Int      @default(0)
+  bitrate        Int?
+  cooldownSeconds Int     @default(10)
+  allowedRoleIds String[] @default([])
+  blockedRoleIds String[] @default([])
+  ownerManaged   Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@index([guildId])
+}
+
+model TempVoiceChannel {
+  channelId      String   @id
+  guildId        String
+  lobbyId        String
+  ownerId        String
+  panelMessageId String?
+  createdAt      DateTime @default(now())
+
+  @@index([guildId])
+  @@index([guildId, ownerId])
+}
+
+model TempVoiceProfile {
+  guildId   String
+  userId    String
+  name      String?
+  userLimit Int?
+  bitrate   Int?
+  locked    Boolean  @default(false)
+  hidden    Boolean  @default(false)
+  trusted   String[] @default([])
+  blocked   String[] @default([])
+  updatedAt DateTime @updatedAt
+
+  @@id([guildId, userId])
+}

@@ -1,0 +1,22 @@
+module.exports = {
+  tvVoice: { id: '1000000000000000201', name: 'voice', animated: false },
+  tvCreate: { id: '1000000000000000202', name: 'voice_create', animated: false },
+  tvLock: { id: '1000000000000000203', name: 'voice_lock', animated: false },
+  tvUnlock: { id: '1000000000000000204', name: 'voice_unlock', animated: false },
+  tvHide: { id: '1000000000000000205', name: 'voice_hide', animated: false },
+  tvShow: { id: '1000000000000000206', name: 'voice_show', animated: false },
+  tvLimit: { id: '1000000000000000207', name: 'voice_limit', animated: false },
+  tvRename: { id: '1000000000000000208', name: 'voice_rename', animated: false },
+  tvPermit: { id: '1000000000000000209', name: 'voice_permit', animated: false },
+  tvReject: { id: '1000000000000000210', name: 'voice_reject', animated: false },
+  tvKick: { id: '1000000000000000211', name: 'voice_kick', animated: false },
+  tvTransfer: { id: '1000000000000000212', name: 'voice_transfer', animated: false },
+  tvClaim: { id: '1000000000000000213', name: 'voice_claim', animated: false },
+  tvTrust: { id: '1000000000000000214', name: 'voice_trust', animated: false },
+  tvBlock: { id: '1000000000000000215', name: 'voice_block', animated: false },
+  tvBitrate: { id: '1000000000000000216', name: 'voice_bitrate', animated: false },
+  tvInfo: { id: '1000000000000000217', name: 'voice_info', animated: false },
+  tvDelete: { id: '1000000000000000218', name: 'voice_delete', animated: false },
+  tvOwner: { id: '1000000000000000219', name: 'voice_owner', animated: false },
+  tvUsers: { id: '1000000000000000220', name: 'voice_users', animated: false }
+};

@@ -5,6 +5,8 @@ const kit = require('../../../../lib/security/commandKit');
 const store = require('../../../../lib/security/store');
 const { postPanel, grantVerification, requireVerification, isConfigured } = require('../../../../lib/security/verification');
 const { securityLog } = require('../../../../lib/security/alerts');
+const { runWizard } = require('../../../../lib/security/wizard');
+const { buildVerificationWizard } = require('../../../../lib/security/wizards/verification');
 const { em } = require('../../../../lib/emojis');
 
 const MODULE = 'verification';
@@ -17,12 +19,7 @@ function data() {
     .addSubcommand(sub =>
       sub
         .setName('setup')
-        .setDescription('Set up verification and post the panel')
-        .addChannelOption(option => option.setName('channel').setDescription('Where to post the verify panel').addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement).setRequired(true))
-        .addRoleOption(option => option.setName('verified-role').setDescription('Role given after verifying'))
-        .addRoleOption(option => option.setName('unverified-role').setDescription('Role given on join and removed after verifying'))
-        .addStringOption(option => option.setName('mode').setDescription('How members verify').addChoices({ name: 'button', value: 'button' }, { name: 'captcha', value: 'captcha' }, { name: 'passphrase', value: 'passphrase' }, { name: 'web (VPN and alt detection)', value: 'web' }))
-        .addStringOption(option => option.setName('scope').setDescription('Who must verify').addChoices({ name: 'everyone', value: 'all' }, { name: 'suspicious accounts only', value: 'suspicious' }))
+        .setDescription('Guided setup: asks questions, creates roles and channels, posts the panel')
     )
     .addSubcommand(sub =>
       sub
@@ -204,24 +201,8 @@ module.exports = {
     if (sub === 'forget') return forget(interaction);
 
     if (sub === 'setup') {
-      const channel = o.getChannel('channel');
-      const verified = o.getRole('verified-role');
-      const unverified = o.getRole('unverified-role');
       const current = (await store.loadConfig(guild.id))[MODULE];
-      if (!verified && !unverified && !current.verifiedRoleId && !current.unverifiedRoleId) {
-        await kit.send(interaction, [`${em.error} Choose a verified role, an unverified role, or both.`]);
-        return;
-      }
-      const result = await applyMany(interaction, [['verifiedRoleId', verified ? verified.id : null], ['unverifiedRoleId', unverified ? unverified.id : null], ['mode', o.getString('mode')], ['scope', o.getString('scope')], ['enabled', 'true']]);
-      if (!result) return;
-      await interaction.deferReply({ ephemeral: true });
-      const sent = await postPanel(guild, channel).catch(() => null);
-      if (!sent) {
-        await kit.send(interaction, [`${em.error} Settings saved, but I could not post in <#${channel.id}>. Check my permissions there.`]);
-        return;
-      }
-      await securityLog(guild, { module: 'verification', action: 'verification set up', executorId: interaction.user.id });
-      await kit.send(interaction, [`${em.success} Verification is on and the panel is in <#${channel.id}>.`, unverified ? '-# Deny the unverified role access to channels except the verify channel.' : '-# Only a verified role is set. Hide your channels from @everyone and show them to the verified role.']);
+      await runWizard(interaction, buildVerificationWizard(guild, current));
       return;
     }
 

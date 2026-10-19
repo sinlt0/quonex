@@ -28,7 +28,7 @@ function buildSlashManifest() {
     return {
       type: 'slash',
       name: jsonData.name,
-      description: jsonData.description,
+      description: jsonData.description || '',
       category: command.category || 'General',
       usage: command.usage || `/${jsonData.name}`,
       hidden: Boolean(command.hidden),

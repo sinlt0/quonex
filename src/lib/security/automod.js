@@ -205,7 +205,10 @@ async function handleMessage(message, isEdit = false) {
   value = Math.min(value, 200);
 
   const deleted = Boolean(hits.length && config.deleteMessages);
-  if (deleted) await message.delete().catch(() => {});
+  if (deleted) {
+    require('../moderation/msglog').markQuiet(message.id);
+    await message.delete().catch(() => {});
+  }
 
   if (value < 100) {
     heat.set(key, { value, at: Date.now() });

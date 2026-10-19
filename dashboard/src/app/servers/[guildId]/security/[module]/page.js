@@ -11,6 +11,7 @@ const PAGES = {
   antiraid: { module: 'antiraid', label: 'Anti-raid', description: 'Detect join floods, screen every join and score risky accounts.', toggle: true },
   automod: { module: 'automod', label: 'Auto-mod', description: 'Filter messages with a heat system and escalating strikes.', toggle: true },
   verification: { module: 'verification', label: 'Verification', description: 'Make members prove they are real before they get in.', toggle: true },
+  moderation: { module: 'moderation', label: 'Moderation', description: 'Settings for /ban, /kick, /timeout, /warn, /purge and /nuke, and how they tie into anti-nuke.', toggle: false },
   lockdown: { module: 'lockdown', label: 'Lockdown', description: 'Lock channels or the whole server and restore exact permissions afterwards.', toggle: false },
   settings: { module: 'core', label: 'Settings', description: 'Logging, access, quarantine and backups.', toggle: false }
 };

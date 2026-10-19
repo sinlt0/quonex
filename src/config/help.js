@@ -12,6 +12,8 @@ const CATEGORY_DESCRIPTIONS = {
   Utility: 'Small quality-of-life commands.',
   Levels: 'XP, ranks, and the server leaderboard.',
   Roles: 'Button, menu and reaction role messages.',
+  Moderation: 'Ban, kick, timeout, warn, purge, nuke and the case log, integrated with security.',
+  Voice: 'Join-to-create voice rooms with owner controls, saved profiles and security checks.',
   Security: 'Anti-nuke, anti-raid, auto-mod, verification, lockdown and the trust system.'
 };
 

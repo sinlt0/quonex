@@ -1,7 +1,7 @@
 const PUNISHMENTS = ['none', 'strip', 'quarantine', 'timeout', 'kick', 'ban'];
 const RAID_ACTIONS = ['none', 'verify', 'quarantine', 'timeout', 'kick', 'ban'];
-const MODULES = ['core', 'antinuke', 'antiraid', 'automod', 'verification', 'lockdown'];
-const WHITELIST_MODULES = ['all', 'antinuke', 'antiraid', 'automod', 'verification', 'lockdown'];
+const MODULES = ['core', 'antinuke', 'antiraid', 'automod', 'verification', 'lockdown', 'moderation'];
+const WHITELIST_MODULES = ['all', 'antinuke', 'antiraid', 'automod', 'verification', 'lockdown', 'moderation'];
 const MAX_EXTRA_OWNERS = 5;
 const MAX_WHITELIST_ENTRIES = 100;
 
@@ -194,6 +194,44 @@ function buildRegistry() {
   add('lockdown', 'lockMessage', 'string', 'This channel is locked while staff handle a security issue.', 'Notice text');
   add('lockdown', 'unlockMessage', 'string', 'This channel has been unlocked.', 'Unlock notice text');
   add('lockdown', 'defaultMinutes', 'int', 0, 'Default lockdown length in minutes (0 means until ended)', { min: 0, max: 10080 });
+
+  add('moderation', 'logChannelId', 'channel', '', 'Moderation log channel (empty uses the security log channel)');
+  add('moderation', 'dmOnAction', 'bool', true, 'DM members when they are warned, timed out, kicked or banned');
+  add('moderation', 'appealText', 'string', '', 'Text added to ban and kick DMs, for example how to appeal');
+  add('moderation', 'requireReason', 'bool', false, 'Moderators must give a reason');
+  add('moderation', 'defaultReason', 'string', 'No reason given', 'Reason used when none is given');
+  add('moderation', 'protectTrusted', 'bool', true, 'Owner, extra owners and whitelisted members cannot be moderated');
+  add('moderation', 'immuneRoleIds', 'rolelist', [], 'Members with these roles cannot be moderated');
+  add('moderation', 'countTowardAntiNuke', 'bool', true, 'Moderator bans, kicks and timeouts count toward the anti-nuke limits, so a rogue moderator is caught like any other nuker');
+  add('moderation', 'defaultBanDeleteDays', 'int', 0, 'Days of messages deleted when banning', { min: 0, max: 7 });
+  add('moderation', 'massBanMax', 'int', 10, 'Most members one /massban can ban', { min: 2, max: 25 });
+  add('moderation', 'massBanTrustedOnly', 'bool', true, 'Only the owner, extra owners and whitelisted members can use /massban');
+  add('moderation', 'maxPurge', 'int', 200, 'Most messages one /purge can delete', { min: 10, max: 1000 });
+  add('moderation', 'purgeKeepPinned', 'bool', true, 'Purge skips pinned messages');
+  add('moderation', 'purgeLog', 'bool', true, 'Log every purge');
+  add('moderation', 'nukeTrustedOnly', 'bool', true, 'Only the owner, extra owners and whitelisted members can use /nuke');
+  add('moderation', 'warnExpireDays', 'int', 0, 'Days until a warning stops counting (0 means never)', { min: 0, max: 3650 });
+  add('moderation', 'warnTimeoutAt', 'int', 3, 'Active warnings that trigger an automatic timeout (0 turns it off)', { min: 0, max: 50 });
+  add('moderation', 'warnTimeoutMinutes', 'int', 60, 'Length of that timeout in minutes', { min: 1, max: 40320 });
+  add('moderation', 'warnKickAt', 'int', 5, 'Active warnings that trigger an automatic kick (0 turns it off)', { min: 0, max: 50 });
+  add('moderation', 'warnBanAt', 'int', 0, 'Active warnings that trigger an automatic ban (0 turns it off)', { min: 0, max: 50 });
+  add('moderation', 'appealsEnabled', 'bool', true, 'Banned members get an Appeal button in their ban DM');
+  add('moderation', 'appealChannelId', 'channel', '', 'Where appeals are sent for review (empty uses the moderation log channel)');
+  add('moderation', 'appealCooldownDays', 'int', 3, 'Days a member must wait after an appeal is decided before appealing again', { min: 0, max: 365 });
+  add('moderation', 'appealMinChars', 'int', 20, 'Shortest appeal text allowed', { min: 10, max: 500 });
+  add('moderation', 'reportsEnabled', 'bool', true, 'Members can report messages with the Report message menu or /report');
+  add('moderation', 'reportChannelId', 'channel', '', 'Where reports are sent (empty uses the moderation log channel)');
+  add('moderation', 'reportPingRoleId', 'role', '', 'Role pinged for each new report');
+  add('moderation', 'watchChannelId', 'channel', '', 'Where watchlist alerts are sent (empty uses the moderation log channel)');
+  add('moderation', 'weeklyReport', 'bool', false, 'Post a weekly moderator activity report to the moderation log channel');
+  add('moderation', 'msgLogChannelId', 'channel', '', 'Channel for edited, deleted and purged message logs (empty turns message logs off)');
+  add('moderation', 'logEdits', 'bool', true, 'Log edited messages');
+  add('moderation', 'logDeletes', 'bool', true, 'Log deleted messages');
+  add('moderation', 'logBulkDeletes', 'bool', true, 'Log bulk deletes with a text transcript');
+  add('moderation', 'logAttachments', 'bool', true, 'Re-upload attachments from deleted messages (up to 5 files of 8 MB)');
+  add('moderation', 'ghostPing', 'bool', true, 'Flag deleted or edited messages that pinged someone');
+  add('moderation', 'logIgnoreBots', 'bool', true, 'Do not log messages from bots');
+  add('moderation', 'logIgnoreChannelIds', 'list', [], 'Channel IDs that are never logged', { pattern: '^\\d{15,25}$' });
 
   return entries;
 }

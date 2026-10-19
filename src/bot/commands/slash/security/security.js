@@ -1,4 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { runWizard } = require('../../../../lib/security/wizard');
+const { buildSecurityWizard } = require('../../../../lib/security/wizards/securitySetup');
 const prisma = require('../../../../lib/db');
 const { requireAccess } = require('../../../../lib/security/access');
 const kit = require('../../../../lib/security/commandKit');
@@ -8,7 +10,7 @@ const { quarantineMember, releaseMember, ensureQuarantineRole, myTop } = require
 const { startPanic, endPanic, isPanic } = require('../../../../lib/security/antinuke');
 const { isRaid } = require('../../../../lib/security/antiraid');
 const { securityLog } = require('../../../../lib/security/alerts');
-const { PRESETS, MODULES, WHITELIST_MODULES, NUKE_EVENTS, MAX_EXTRA_OWNERS, MAX_WHITELIST_ENTRIES, SECURITY_ERRORS } = require('../../../../config/security');
+const { MODULES, WHITELIST_MODULES, NUKE_EVENTS, MAX_EXTRA_OWNERS, MAX_WHITELIST_ENTRIES, SECURITY_ERRORS } = require('../../../../config/security');
 const { em } = require('../../../../lib/emojis');
 
 const NEEDED = [
@@ -34,15 +36,7 @@ function data() {
   builder.addSubcommand(sub =>
     sub
       .setName('setup')
-      .setDescription('Apply a security preset in one step')
-      .addStringOption(option =>
-        option
-          .setName('preset')
-          .setDescription('How strict to be')
-          .setRequired(true)
-          .addChoices(...Object.keys(PRESETS).map(name => ({ name, value: name })))
-      )
-      .addChannelOption(option => option.setName('log-channel').setDescription('Where security events are posted'))
+      .setDescription('Guided setup: asks questions and configures every security feature')
   );
 
   builder.addSubcommand(sub =>
@@ -198,17 +192,8 @@ async function status(interaction) {
 }
 
 async function setup(interaction) {
-  const name = interaction.options.getString('preset');
-  const channel = interaction.options.getChannel('log-channel');
-  await store.applyPreset(interaction.guild.id, PRESETS[name]);
-  if (channel) await store.setRaw(interaction.guild.id, 'core', 'logChannelId', channel.id);
-  await securityLog(interaction.guild, { module: 'core', action: `preset ${name} applied`, executorId: interaction.user.id });
-  await kit.send(interaction, [
-    `${em.success} Applied the **${name}** preset. ${PRESETS[name].description}`,
-    channel ? `Logging to <#${channel.id}>.` : 'Set a log channel with `/security logchannel`.',
-    'Verification and quarantine are not part of presets. Set them up with `/verification setup` and `/security quarantine setup`.',
-    'Tune any value with `/security config set`.'
-  ]);
+  const config = await store.loadConfig(interaction.guild.id);
+  await runWizard(interaction, buildSecurityWizard(interaction.guild, config));
 }
 
 async function logs(interaction) {

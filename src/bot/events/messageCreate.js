@@ -3,6 +3,7 @@ const { handleNoPrefix } = require('../handlers/noPrefixHandler');
 const { handleAfkReturn, notifyAfkMentions } = require('../../lib/afk');
 const { addXpFromMessage } = require('../../lib/levels');
 const { handleMessage: handleAutomod } = require('../../lib/security/automod');
+const { checkMessage: checkWatched } = require('../../lib/moderation/watch');
 const { handleEveryoneMention } = require('../../lib/security/antinuke');
 
 module.exports = {
@@ -20,6 +21,8 @@ module.exports = {
       });
       if (deleted) return;
     }
+
+    if (message.guild && !message.author.bot) await checkWatched(message).catch(error => console.error('Watchlist check failed:', error));
 
     if (!message.author.bot && message.guild) {
       await handleAfkReturn(message).catch(error => console.error('AFK return check failed:', error));

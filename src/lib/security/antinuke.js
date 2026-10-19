@@ -315,6 +315,12 @@ async function processEvent({ guild, config, entry, executorId, event, extra }) 
   }
 }
 
+async function recordModAction(guild, moderatorId, event, targetId) {
+  const config = (await loadConfig(guild.id)).antinuke;
+  if (!config.enabled) return;
+  await processEvent({ guild, config, entry: { targetId }, executorId: moderatorId, event, extra: {} });
+}
+
 async function handleAuditEntry(entry, guild) {
   const config = (await loadConfig(guild.id)).antinuke;
   if (!config.enabled) return;
@@ -352,6 +358,7 @@ async function handleEveryoneMention(message) {
   if (!config.enabled || !config['everyoneMention.enabled']) return false;
   if (await isUserTrusted(message.guild, message.author.id, 'antinuke', 'everyoneMention')) return false;
 
+  require('../moderation/msglog').markQuiet(message.id);
   await message.delete().catch(() => {});
   await processEvent({
     guild: message.guild,
@@ -364,4 +371,4 @@ async function handleEveryoneMention(message) {
   return true;
 }
 
-module.exports = { handleAuditEntry, handleEveryoneMention, rememberChannel, rememberRole, startPanic, endPanic, isPanic };
+module.exports = { recordModAction, handleAuditEntry, handleEveryoneMention, rememberChannel, rememberRole, startPanic, endPanic, isPanic };

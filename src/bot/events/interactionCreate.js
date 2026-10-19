@@ -14,6 +14,9 @@ const {
 } = require('../../lib/applications');
 const { handleInteractiveComponent } = require('../../lib/interactive');
 const { handleVerifyButton, handleVerifyModal } = require('../../lib/security/verification');
+const { handleAppealInteraction } = require('../../lib/moderation/appeals');
+const { handleReportInteraction } = require('../../lib/moderation/reports');
+const { handleTempVoice } = require('../../lib/tempvoice/interactions');
 const { runSlashCommand, runInteractionHandler } = require('../../lib/commandRunner');
 
 module.exports = {
@@ -31,6 +34,27 @@ module.exports = {
       const command = interaction.client.commands.get(interaction.commandName);
       if (!command) return;
       await runSlashCommand(command, interaction);
+      return;
+    }
+
+    if (interaction.customId && interaction.customId.startsWith('ap:')) {
+      await runInteractionHandler(handleAppealInteraction, interaction, 'appeal');
+      return;
+    }
+
+    if (interaction.customId && interaction.customId.startsWith('rp:')) {
+      await runInteractionHandler(handleReportInteraction, interaction, 'report');
+      return;
+    }
+
+    if (interaction.isMessageContextMenuCommand()) {
+      const command = interaction.client.commands.get(interaction.commandName);
+      if (command) await runSlashCommand(command, interaction);
+      return;
+    }
+
+    if (interaction.customId && interaction.customId.startsWith('tv:')) {
+      await runInteractionHandler(handleTempVoice, interaction, 'temp voice');
       return;
     }
 

@@ -333,7 +333,7 @@
   {
     "type": "slash",
     "name": "afk",
-    "description": "Mark yourself as AFK — anyone who @mentions you gets told, and it clears the next time you talk",
+    "description": "Mark yourself as AFK \u2014 anyone who @mentions you gets told, and it clears the next time you talk",
     "category": "Utility",
     "usage": "/afk [reason]",
     "hidden": false,
@@ -360,7 +360,7 @@
   {
     "type": "prefix",
     "name": "afk",
-    "description": "Mark yourself as AFK — anyone who @mentions you gets told, and it clears the next time you talk",
+    "description": "Mark yourself as AFK \u2014 anyone who @mentions you gets told, and it clears the next time you talk",
     "category": "Utility",
     "usage": "afk [reason]",
     "hidden": false,
@@ -416,7 +416,7 @@
       },
       {
         "name": "setup",
-        "description": "Apply a security preset in one step"
+        "description": "Guided setup: asks questions and configures every security feature"
       },
       {
         "name": "logchannel",
@@ -724,7 +724,7 @@
     "subcommands": [
       {
         "name": "setup",
-        "description": "Set up verification and post the panel"
+        "description": "Guided setup: asks questions, creates roles and channels, posts the panel"
       },
       {
         "name": "panel",
@@ -841,5 +841,545 @@
         "description": "Reset a setting or the module to defaults"
       }
     ]
+  },
+  {
+    "type": "slash",
+    "name": "ban",
+    "description": "Ban a user, permanently or for a set time",
+    "category": "Moderation",
+    "usage": "/ban <user> [reason] [duration] [delete-days] [silent]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "case",
+    "description": "View and manage moderation cases",
+    "category": "Moderation",
+    "usage": "/case <view|reason|delete|list>",
+    "hidden": false,
+    "subcommands": [
+      {
+        "name": "view",
+        "description": "Show one case"
+      },
+      {
+        "name": "reason",
+        "description": "Change a case reason"
+      },
+      {
+        "name": "delete",
+        "description": "Delete a case"
+      },
+      {
+        "name": "list",
+        "description": "Browse cases"
+      }
+    ]
+  },
+  {
+    "type": "slash",
+    "name": "history",
+    "description": "Moderation history for a user",
+    "category": "Moderation",
+    "usage": "/history <user>",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "kick",
+    "description": "Kick a member",
+    "category": "Moderation",
+    "usage": "/kick <user> [reason] [silent]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "massban",
+    "description": "Ban several users by ID",
+    "category": "Moderation",
+    "usage": "/massban <ids> [reason]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "nick",
+    "description": "Change or reset a member nickname",
+    "category": "Moderation",
+    "usage": "/nick <user> [nickname]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "nuke",
+    "description": "Wipe a channel by cloning it and deleting the original",
+    "category": "Moderation",
+    "usage": "/nuke [channel]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "amount",
+    "description": "How many messages to scan",
+    "category": "Moderation",
+    "usage": "/purge <all|user|bots|humans|links|invites|attachments|embeds|contains> <amount>",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "slowmode",
+    "description": "Set channel slowmode",
+    "category": "Moderation",
+    "usage": "/slowmode <seconds> [channel]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "softban",
+    "description": "Ban and immediately unban to wipe recent messages",
+    "category": "Moderation",
+    "usage": "/softban <user> [reason] [delete-days]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "timeout",
+    "description": "Time a member out (max 28 days)",
+    "category": "Moderation",
+    "usage": "/timeout <user> <duration> [reason]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "unban",
+    "description": "Unban a user",
+    "category": "Moderation",
+    "usage": "/unban <user> [reason]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "untimeout",
+    "description": "Remove a timeout",
+    "category": "Moderation",
+    "usage": "/untimeout <user> [reason]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "warn",
+    "description": "Warn a member",
+    "category": "Moderation",
+    "usage": "/warn <user> [reason]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "warnings",
+    "description": "Show or clear a member's warnings",
+    "category": "Moderation",
+    "usage": "/warnings <view|remove|clear>",
+    "hidden": false,
+    "subcommands": [
+      {
+        "name": "view",
+        "description": "Show active warnings"
+      },
+      {
+        "name": "remove",
+        "description": "Remove one warning by case number"
+      },
+      {
+        "name": "clear",
+        "description": "Clear all active warnings"
+      }
+    ]
+  },
+  {
+    "type": "prefix",
+    "name": "prefix",
+    "description": "View or change the command prefix for this server",
+    "category": "Config",
+    "usage": "prefix [set <prefix> | reset]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "ban",
+    "description": "Ban a user, permanently or for a set time",
+    "category": "Moderation",
+    "usage": "ban @user [duration] [reason]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "case",
+    "description": "Show a moderation case",
+    "category": "Moderation",
+    "usage": "case <number>",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "history",
+    "description": "Moderation history for a user",
+    "category": "Moderation",
+    "usage": "history @user",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "kick",
+    "description": "Kick a member",
+    "category": "Moderation",
+    "usage": "kick @user [reason]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "massban",
+    "description": "Ban several users by ID",
+    "category": "Moderation",
+    "usage": "massban <id> <id> ... [reason]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "nick",
+    "description": "Change or reset a member nickname",
+    "category": "Moderation",
+    "usage": "nick @user [nickname]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "nuke",
+    "description": "Wipe this channel by cloning it and deleting the original",
+    "category": "Moderation",
+    "usage": "nuke",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "purge",
+    "description": "Bulk delete messages",
+    "category": "Moderation",
+    "usage": "purge <amount> [all|bots|humans|links|invites|attachments|embeds|@user|text]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "slowmode",
+    "description": "Set slowmode in this channel",
+    "category": "Moderation",
+    "usage": "slowmode <seconds>",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "softban",
+    "description": "Ban and immediately unban to wipe recent messages",
+    "category": "Moderation",
+    "usage": "softban @user [reason]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "timeout",
+    "description": "Time a member out (max 28 days)",
+    "category": "Moderation",
+    "usage": "timeout @user <duration> [reason]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "unban",
+    "description": "Unban a user by ID",
+    "category": "Moderation",
+    "usage": "unban <userId> [reason]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "untimeout",
+    "description": "Remove a timeout",
+    "category": "Moderation",
+    "usage": "untimeout @user [reason]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "unwarn",
+    "description": "Remove a warning by case number, or clear all for a user",
+    "category": "Moderation",
+    "usage": "unwarn <case number | @user>",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "warn",
+    "description": "Warn a member",
+    "category": "Moderation",
+    "usage": "warn @user [reason]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "prefix",
+    "name": "warnings",
+    "description": "Show a member's active warnings",
+    "category": "Moderation",
+    "usage": "warnings @user",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "voice",
+    "description": "Manage your temporary voice room",
+    "category": "Voice",
+    "usage": "/voice <panel|name|limit|bitrate|lock|unlock|hide|unhide|permit|reject|kick|trust|untrust|block|unblock|transfer|claim|info|delete|reset>",
+    "hidden": false,
+    "subcommands": [
+      {
+        "name": "panel",
+        "description": "Post the control panel in your room"
+      },
+      {
+        "name": "name",
+        "description": "Rename your room"
+      },
+      {
+        "name": "limit",
+        "description": "Set the user limit"
+      },
+      {
+        "name": "bitrate",
+        "description": "Set the bitrate"
+      },
+      {
+        "name": "lock",
+        "description": "Lock the room"
+      },
+      {
+        "name": "unlock",
+        "description": "Unlock the room"
+      },
+      {
+        "name": "hide",
+        "description": "Hide the room"
+      },
+      {
+        "name": "unhide",
+        "description": "Show the room again"
+      },
+      {
+        "name": "permit",
+        "description": "Let someone join your room"
+      },
+      {
+        "name": "reject",
+        "description": "Stop someone joining and remove them"
+      },
+      {
+        "name": "kick",
+        "description": "Remove someone from your room"
+      },
+      {
+        "name": "trust",
+        "description": "Always let someone into your rooms"
+      },
+      {
+        "name": "untrust",
+        "description": "Remove someone from your trusted list"
+      },
+      {
+        "name": "block",
+        "description": "Block someone from all your rooms"
+      },
+      {
+        "name": "unblock",
+        "description": "Unblock someone"
+      },
+      {
+        "name": "transfer",
+        "description": "Give your room to someone inside it"
+      },
+      {
+        "name": "claim",
+        "description": "Claim a room whose owner left"
+      },
+      {
+        "name": "info",
+        "description": "Show room details"
+      },
+      {
+        "name": "delete",
+        "description": "Delete your room"
+      },
+      {
+        "name": "reset",
+        "description": "Forget your saved room settings"
+      }
+    ]
+  },
+  {
+    "type": "slash",
+    "name": "tempvoice",
+    "description": "Set up join-to-create voice lobbies",
+    "category": "Voice",
+    "usage": "/tempvoice <setup|edit|remove|list|settings|close>",
+    "hidden": false,
+    "subcommands": [
+      {
+        "name": "setup",
+        "description": "Create a new join-to-create lobby"
+      },
+      {
+        "name": "edit",
+        "description": "Edit a lobby"
+      },
+      {
+        "name": "remove",
+        "description": "Stop using a channel as a lobby"
+      },
+      {
+        "name": "list",
+        "description": "Show lobbies, settings and active rooms"
+      },
+      {
+        "name": "settings",
+        "description": "Change server-wide temp voice settings"
+      },
+      {
+        "name": "close",
+        "description": "Delete a temporary room"
+      }
+    ]
+  },
+  {
+    "type": "prefix",
+    "name": "voice",
+    "description": "Manage your temporary voice room",
+    "category": "Voice",
+    "usage": "voice <name|limit|bitrate|lock|unlock|hide|unhide|permit|reject|kick|trust|untrust|block|unblock|transfer|claim|info|delete> [value]",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "Report message",
+    "description": "",
+    "category": "Moderation",
+    "usage": "Right click a message, Apps, Report message",
+    "hidden": true,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "report",
+    "description": "Report a message to the moderators",
+    "category": "Moderation",
+    "usage": "/report <message link>",
+    "hidden": false,
+    "subcommands": []
+  },
+  {
+    "type": "slash",
+    "name": "note",
+    "description": "Private staff notes about a member",
+    "category": "Moderation",
+    "usage": "/note <add|list|remove>",
+    "hidden": false,
+    "subcommands": [
+      {
+        "name": "add",
+        "description": "Add a note"
+      },
+      {
+        "name": "list",
+        "description": "Show notes"
+      },
+      {
+        "name": "remove",
+        "description": "Remove a note"
+      }
+    ]
+  },
+  {
+    "type": "slash",
+    "name": "watchlist",
+    "description": "Get alerted when a flagged user joins or speaks",
+    "category": "Moderation",
+    "usage": "/watchlist <add|remove|list>",
+    "hidden": false,
+    "subcommands": [
+      {
+        "name": "add",
+        "description": "Add a user"
+      },
+      {
+        "name": "remove",
+        "description": "Remove a user"
+      },
+      {
+        "name": "list",
+        "description": "Show watched users"
+      }
+    ]
+  },
+  {
+    "type": "slash",
+    "name": "appeal",
+    "description": "Review ban appeals",
+    "category": "Moderation",
+    "usage": "/appeal <list|view>",
+    "hidden": false,
+    "subcommands": [
+      {
+        "name": "list",
+        "description": "Show appeals"
+      },
+      {
+        "name": "view",
+        "description": "Show one appeal"
+      }
+    ]
+  },
+  {
+    "type": "slash",
+    "name": "modstats",
+    "description": "Moderation activity for the server or one moderator",
+    "category": "Moderation",
+    "usage": "/modstats [days] [moderator]",
+    "hidden": false,
+    "subcommands": []
   }
 ]

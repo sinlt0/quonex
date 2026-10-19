@@ -95,6 +95,11 @@ async function notifyOffender(guild, userId, action, reason) {
   await user.send(v2Message([`You were ${verb} **${guild.name}**.`, `Reason: ${reason}`], { footer: false })).catch(() => {});
 }
 
+async function recordAuto(guild, userId, action, reason, minutes) {
+  const { createCase } = require('../moderation/cases');
+  await createCase({ guildId: guild.id, userId, moderatorId: guild.client.user.id, action, reason: reason || 'Security action', duration: minutes || null, auto: true }).catch(() => {});
+}
+
 async function punish({ guild, userId, action, reason, timeoutMinutes = 60, deleteSeconds = 0, by }) {
   if (!action || action === 'none') return { ok: true, applied: 'none' };
 
@@ -114,17 +119,21 @@ async function punish({ guild, userId, action, reason, timeoutMinutes = 60, dele
       }
       case 'quarantine':
         await quarantineMember(guild, member, reason, by || guild.client.user.id);
+        await recordAuto(guild, userId, 'quarantine', reason);
         return { ok: true, applied: 'quarantine' };
       case 'timeout':
         await member.timeout(Math.min(timeoutMinutes * 60 * 1000, TIMEOUT_MAX_MS), tag);
+        await recordAuto(guild, userId, 'timeout', reason, timeoutMinutes);
         return { ok: true, applied: `timeout (${timeoutMinutes}m)` };
       case 'kick':
         if (config.dmOffenders) await notifyOffender(guild, userId, 'kick', reason);
         await member.kick(tag);
+        await recordAuto(guild, userId, 'kick', reason);
         return { ok: true, applied: 'kick' };
       case 'ban':
         if (member && config.dmOffenders) await notifyOffender(guild, userId, 'ban', reason);
         await guild.members.ban(userId, { reason: tag, deleteMessageSeconds: Math.min(deleteSeconds, 604800) });
+        await recordAuto(guild, userId, 'ban', reason);
         return { ok: true, applied: 'ban' };
       default:
         return { ok: false, applied: action, error: 'unknown-action' };

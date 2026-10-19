@@ -15,8 +15,8 @@ const {
 } = require('./interactive');
 const { runSecurityAction } = require('./security/internal');
 const prisma = require('./db');
+const { resolveSocketPath, isNamedPipe } = require('./socketPath');
 
-const DEFAULT_SOCKET_PATH = '/tmp/quonex-internal.sock';
 
 function verifySecret(req) {
   const header = req.headers['x-internal-secret'];
@@ -233,13 +233,14 @@ const ROUTES = {
 };
 
 function startInternalApi(client) {
-  const socketPath = process.env.INTERNAL_API_SOCKET || DEFAULT_SOCKET_PATH;
+  const socketPath = resolveSocketPath();
+  const pipe = isNamedPipe(socketPath);
 
   if (!process.env.INTERNAL_API_SECRET) {
     console.error('INTERNAL_API_SECRET is not set - the internal API will reject every request until it is.');
   }
 
-  if (fs.existsSync(socketPath)) {
+  if (!pipe && fs.existsSync(socketPath)) {
     fs.unlinkSync(socketPath);
   }
 
@@ -270,11 +271,11 @@ function startInternalApi(client) {
   });
 
   server.listen(socketPath, () => {
-    console.log(`Internal API listening on unix socket ${socketPath}`);
+    console.log(`Internal API listening on ${pipe ? 'named pipe' : 'unix socket'} ${socketPath}`);
   });
 
   const cleanup = () => {
-    if (fs.existsSync(socketPath)) {
+    if (!pipe && fs.existsSync(socketPath)) {
       fs.unlinkSync(socketPath);
     }
   };

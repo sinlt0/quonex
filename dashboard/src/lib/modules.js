@@ -24,6 +24,15 @@ export const MODULES = [
     group: 'community'
   },
   {
+    id: 'voice',
+    label: 'Temp Voice',
+    description: 'Join-to-create voice lobbies with owner controls, saved profiles and security checks.',
+    icon: 'voice',
+    href: '/voice',
+    matches: ['/voice'],
+    group: 'community'
+  },
+  {
     id: 'roles',
     label: 'Roles & Buttons',
     description: 'Button, menu and reaction role messages with a full Components V2 builder.',
